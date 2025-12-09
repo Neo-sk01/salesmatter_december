@@ -1,0 +1,312 @@
+# Implementation Plan
+
+- [ ] 1. Set up Convex backend project structure
+  - [ ] 1.1 Initialize Convex project and configure schema
+    - Install Convex dependencies and initialize project
+    - Create convex/schema.ts with all table definitions (accounts, users, workspaces, lead_lists, leads, sequences, sequence_steps, lead_enrollments, email_drafts, email_events, scheduled_jobs)
+    - Configure indexes for efficient queries
+    - _Requirements: 1.1, 2.1, 3.1, 5.1_
+  - [ ] 1.2 Write property test for workspace isolation
+    - **Property 1: Workspace Isolation**
+    - **Validates: Requirements 1.2, 1.3**
+  - [ ] 1.3 Write property test for unique workspace identifiers
+    - **Property 2: Unique Workspace Identifiers**
+    - **Validates: Requirements 1.1**
+
+- [ ] 2. Implement multi-tenant workspace management
+  - [ ] 2.1 Create workspace mutations and queries
+    - Implement createWorkspace mutation with unique ID generation
+    - Implement getWorkspace, listWorkspaces queries with account filtering
+    - Add workspace access validation helper function
+    - _Requirements: 1.1, 1.2, 1.3_
+  - [ ] 2.2 Implement user and account management
+    - Create account and user mutations
+    - Implement user-workspace association
+    - Add role-based access control helpers
+    - _Requirements: 1.2_
+  - [ ] 2.3 Write unit tests for workspace management
+    - Test workspace creation with unique IDs
+    - Test access validation logic
+    - _Requirements: 1.1, 1.2, 1.3_
+
+- [ ] 3. Implement lead and lead list management
+  - [ ] 3.1 Create lead_list mutations and queries
+    - Implement createLeadList mutation with timestamp
+    - Implement listLeadLists query with workspace filtering and descending sort
+    - Implement getLeadList query with lead count aggregation
+    - Implement deleteLeadList mutation with soft-delete
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+  - [ ] 3.2 Write property test for lead list ordering
+    - **Property 5: Lead List Ordering**
+    - **Validates: Requirements 3.3**
+  - [ ] 3.3 Create lead mutations and queries
+    - Implement createLead mutation with all required fields
+    - Implement updateLead mutation with timestamp update
+    - Implement listLeads query with pagination and workspace filtering
+    - Implement deleteLead mutation with soft-delete and enrollment cascade
+    - _Requirements: 2.1, 2.2, 2.3, 2.5_
+  - [ ] 3.4 Write property test for lead persistence completeness
+    - **Property 3: Lead Persistence Completeness**
+    - **Validates: Requirements 2.1**
+  - [ ] 3.5 Write property test for lead list association
+    - **Property 4: Lead List Association**
+    - **Validates: Requirements 3.1, 3.2**
+  - [ ] 3.6 Write unit tests for lead management
+    - Test lead CRUD operations
+    - Test pagination logic
+    - Test soft-delete cascade
+    - _Requirements: 2.1, 2.2, 2.3, 2.5_
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 5. Set up AI orchestration service (Python)
+  - [ ] 5.1 Initialize Python project with uv
+    - Create pyproject.toml with dependencies (langchain, langgraph, langfuse, openai)
+    - Set up project structure (src/graphs, src/nodes, src/prompts, src/tracing)
+    - Configure environment variables for API keys
+    - _Requirements: 4.1, 6.1, 11.1_
+  - [ ] 5.2 Implement Langfuse tracing wrapper
+    - Create langfuse_wrapper.py with traced_llm_call decorator
+    - Implement trace context management with workspace/user metadata
+    - Add error logging to Langfuse
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
+  - [ ] 5.3 Write property test for Langfuse trace completeness
+    - **Property 14: Langfuse Trace Completeness**
+    - **Validates: Requirements 11.2**
+  - [ ] 5.4 Write unit tests for tracing wrapper
+    - Test trace creation with metadata
+    - Test error recording
+    - _Requirements: 11.1, 11.2, 11.3_
+
+- [ ] 6. Implement CSV mapping AI workflow
+  - [ ] 6.1 Create CSV parser node
+    - Implement CSV parsing with header extraction
+    - Extract sample rows for AI analysis
+    - Handle encoding and delimiter detection
+    - _Requirements: 4.1_
+  - [ ] 6.2 Create field mapping LangGraph workflow
+    - Implement suggest_mappings node with GPT-4o-mini
+    - Create mapping prompt template
+    - Build LangGraph state machine for CSV mapping flow
+    - _Requirements: 4.2, 4.3_
+  - [ ] 6.3 Write property test for CSV mapping validity
+    - **Property 6: CSV Mapping Validity**
+    - **Validates: Requirements 4.2**
+  - [ ] 6.4 Create CSV import Convex action
+    - Implement action to call AI service for mapping suggestions
+    - Create bulk lead creation with lead_list association
+    - Return import summary with success/failure counts
+    - _Requirements: 4.4, 4.5_
+  - [ ] 6.5 Write property test for import summary accuracy
+    - **Property 7: Import Summary Accuracy**
+    - **Validates: Requirements 4.5**
+  - [ ] 6.6 Write unit tests for CSV import flow
+    - Test CSV parsing with various formats
+    - Test mapping suggestion validation
+    - Test bulk lead creation
+    - _Requirements: 4.1, 4.2, 4.4, 4.5_
+
+- [ ] 7. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 8. Implement email sequence management
+  - [ ] 8.1 Create sequence mutations and queries
+    - Implement createSequence, updateSequence mutations
+    - Implement listSequences query with status filtering
+    - Implement activateSequence with validation
+    - Implement pauseSequence mutation
+    - _Requirements: 5.1, 5.4, 5.5_
+  - [ ] 8.2 Write property test for sequence activation validation
+    - **Property 9: Sequence Activation Validation**
+    - **Validates: Requirements 5.4**
+  - [ ] 8.3 Create sequence step mutations
+    - Implement addStep, updateStep, deleteStep mutations
+    - Implement reorderSteps mutation with atomic order updates
+    - _Requirements: 5.2, 5.3_
+  - [ ] 8.4 Write property test for sequence step ordering
+    - **Property 8: Sequence Step Ordering**
+    - **Validates: Requirements 5.3**
+  - [ ] 8.5 Write unit tests for sequence management
+    - Test sequence CRUD operations
+    - Test step reordering
+    - Test activation validation
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+
+- [ ] 9. Implement AI-powered email generation
+  - [ ] 9.1 Create email generation LangGraph workflow
+    - Implement email_writer node with GPT-4.1
+    - Create email prompt template with lead context placeholders
+    - Build LangGraph state machine for email generation
+    - _Requirements: 6.1, 6.2, 6.3_
+  - [ ] 9.2 Create email draft mutations
+    - Implement createDraft mutation with AI-generated content
+    - Implement updateDraft mutation with status transitions
+    - Implement listDrafts query with status filtering
+    - _Requirements: 6.4, 6.5_
+  - [ ] 9.3 Write property test for email draft status transitions
+    - **Property 10: Email Draft Status Transitions**
+    - **Validates: Requirements 6.4, 6.5, 8.2, 8.3**
+  - [ ] 9.4 Write unit tests for email generation
+    - Test draft creation and updates
+    - Test status transition validation
+    - _Requirements: 6.1, 6.4, 6.5_
+
+- [ ] 10. Implement lead enrollment in sequences
+  - [ ] 10.1 Create enrollment mutations and queries
+    - Implement enrollLead mutation with enrollment record creation
+    - Implement pauseEnrollment, resumeEnrollment mutations
+    - Implement listEnrollments query with status filtering
+    - _Requirements: 7.1, 7.4_
+  - [ ] 10.2 Implement enrollment scheduling
+    - Create scheduled job for first sequence step on enrollment
+    - Implement step progression logic
+    - Handle enrollment completion
+    - _Requirements: 7.2, 7.3_
+  - [ ] 10.3 Implement unsubscribe handling
+    - Create terminateEnrollments mutation for unsubscribe events
+    - Update lead status on unsubscribe
+    - _Requirements: 7.5_
+  - [ ] 10.4 Write property test for enrollment termination on unsubscribe
+    - **Property 11: Enrollment Termination on Unsubscribe**
+    - **Validates: Requirements 7.5, 12.5**
+  - [ ] 10.5 Write unit tests for enrollment management
+    - Test enrollment creation and scheduling
+    - Test unsubscribe cascade
+    - _Requirements: 7.1, 7.2, 7.5_
+
+- [ ] 11. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 12. Set up Everytics analytics service
+  - [ ] 12.1 Initialize Everytics TypeScript project
+    - Create project with Drizzle ORM and Neon driver
+    - Set up Express/Hono API server
+    - Configure environment variables for Neon connection
+    - _Requirements: 9.1, 10.1_
+  - [ ] 12.2 Create Neon database schema with Drizzle
+    - Define campaigns, delivery_stats, engagement_stats tables
+    - Define unsubscribe_stats, timeline_events, workspace_aggregates tables
+    - Generate and run migrations
+    - _Requirements: 9.3_
+  - [ ] 12.3 Write unit tests for Drizzle schema
+    - Test table creation and relationships
+    - Test upsert operations
+    - _Requirements: 9.3_
+
+- [ ] 13. Implement Everlytic webhook integration
+  - [ ] 13.1 Create webhook registration service
+    - Implement registerWebhooks function for all event types
+    - Configure basic auth credentials
+    - Handle registration response and store webhook IDs
+    - _Requirements: 9.1, 9.6_
+  - [ ] 13.2 Create webhook endpoint handler
+    - Implement POST /api/webhooks/everlytic endpoint
+    - Add basic auth validation middleware
+    - Parse and validate webhook payload
+    - _Requirements: 9.2, 9.5_
+  - [ ] 13.3 Implement event normalization and persistence
+    - Normalize Everlytic event data to standard schema
+    - Upsert timeline_events and stats tables
+    - Update Convex email_events collection
+    - _Requirements: 9.3, 9.4_
+  - [ ] 13.4 Write property test for webhook event normalization
+    - **Property 12: Webhook Event Normalization**
+    - **Validates: Requirements 9.3**
+  - [ ] 13.5 Write unit tests for webhook handling
+    - Test auth validation
+    - Test payload parsing
+    - Test event normalization
+    - _Requirements: 9.2, 9.3, 9.5_
+
+- [ ] 14. Implement Everlytic email sending
+  - [ ] 14.1 Create Everlytic API client
+    - Implement sendEmail function with tracking parameters
+    - Handle API responses and errors
+    - Store Everlytic message IDs
+    - _Requirements: 8.1, 8.2, 8.3, 8.4_
+  - [ ] 14.2 Create send email Convex action
+    - Implement action to send draft via Everlytic
+    - Update draft status based on API response
+    - Handle bounce events from webhooks
+    - _Requirements: 8.1, 8.2, 8.3, 8.5_
+  - [ ]* 14.3 Write unit tests for email sending
+    - Test API client with mocked responses
+    - Test status updates on success/failure
+    - _Requirements: 8.1, 8.2, 8.3_
+
+- [ ] 15. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 16. Implement analytics reporting
+  - [ ] 16.1 Create analytics API endpoints
+    - Implement GET /api/metrics/:workspaceId/campaigns/:campaignId
+    - Implement GET /api/metrics/:workspaceId/timeseries
+    - Implement GET /api/metrics/:workspaceId/aggregate
+    - _Requirements: 10.1, 10.2, 10.4_
+  - [ ] 16.2 Implement rate calculations
+    - Calculate openRate, clickRate, replyRate, bounceRate
+    - Handle edge cases (division by zero)
+    - _Requirements: 10.3_
+  - [ ] 16.3 Write property test for rate calculation correctness
+    - **Property 13: Rate Calculation Correctness**
+    - **Validates: Requirements 10.3**
+  - [ ] 16.4 Write unit tests for analytics endpoints
+    - Test aggregation queries
+    - Test time-series filtering
+    - Test rate calculations
+    - _Requirements: 10.1, 10.2, 10.3, 10.4_
+
+- [ ] 17. Implement reply and intent classification
+  - [ ] 17.1 Create intent classification LangGraph workflow
+    - Implement intent_classifier node with GPT-4o-mini
+    - Create classification prompt template
+    - Return intent with confidence score
+    - _Requirements: 12.1, 12.2, 12.4_
+  - [ ] 17.2 Write property test for intent classification validity
+    - **Property 15: Intent Classification Validity**
+    - **Validates: Requirements 12.1**
+  - [ ] 17.3 Create reply processing Convex action
+    - Implement action to classify incoming replies
+    - Update lead status based on intent
+    - Trigger enrollment termination for unsubscribe intent
+    - _Requirements: 12.3, 12.5_
+  - [ ] 17.4 Write unit tests for intent classification
+    - Test classification with various reply types
+    - Test lead status updates
+    - _Requirements: 12.1, 12.3, 12.5_
+
+- [ ] 18. Implement scheduled job execution
+  - [ ] 18.1 Create job scheduler infrastructure
+    - Implement createScheduledJob mutation
+    - Create job execution cron/interval handler
+    - Implement job status updates
+    - _Requirements: 13.1, 13.2_
+  - [ ] 18.2 Implement retry logic with exponential backoff
+    - Track attempt count per job
+    - Calculate backoff delay
+    - Mark job as failed after max attempts
+    - _Requirements: 13.3, 13.4_
+  - [ ] 18.3 Write property test for scheduled job retry limit
+    - **Property 16: Scheduled Job Retry Limit**
+    - **Validates: Requirements 13.3**
+  - [ ] 18.4 Write unit tests for job scheduler
+    - Test job creation and execution
+    - Test retry logic
+    - Test failure handling
+    - _Requirements: 13.1, 13.2, 13.3, 13.4_
+
+- [ ] 19. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 20. Integration testing and documentation
+  - [ ] 20.1 Create end-to-end integration tests
+    - Test complete lead import flow
+    - Test email sending and webhook receipt flow
+    - Test sequence enrollment and execution flow
+    - _Requirements: All_
+  - [ ] 20.2 Create API documentation
+    - Document Everytics API endpoints
+    - Document AI service endpoints
+    - Document Convex mutations and queries
+    - _Requirements: All_
