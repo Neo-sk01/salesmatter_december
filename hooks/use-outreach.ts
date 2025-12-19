@@ -179,7 +179,7 @@ Neil`,
       company: "Jumo",
       role: "Founder & Group CEO",
       segment: "Enterprise",
-      status: "Sent",
+      status: "Contacted",
       lastActivity: "1 day ago",
     },
     subject: "Congrats on Jumo's Series B",
@@ -208,7 +208,7 @@ Neil`,
       company: "Cellulant",
       role: "Group CEO",
       segment: "Enterprise",
-      status: "Sent",
+      status: "Contacted",
       lastActivity: "2 days ago",
     },
     subject: "Cellulant's pan-African vision",
@@ -289,43 +289,47 @@ export function useOutreach() {
     setIsDrafting(true)
     setCurrentBatch((prev) => (prev ? { ...prev, status: "drafting" } : null))
 
-    // Simulate AI drafting with delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    try {
+      const response = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leads: selectedLeads, promptTemplate }),
+      })
 
-    const newDrafts: EmailDraft[] = selectedLeads.map((lead, index) => ({
-      id: `draft-${Date.now()}-${index}`,
-      leadId: lead.id,
-      lead: {
-        id: lead.id,
-        firstName: lead.firstName,
-        lastName: lead.lastName,
-        email: lead.email,
-        company: lead.company,
-        role: lead.role,
-        segment: "Mid-Market",
-        status: "New",
-        lastActivity: "Just now",
-      },
-      subject: `Quick question for ${lead.firstName} at ${lead.company}`,
-      body: `Hi ${lead.firstName},
+      const result = await response.json()
+      if (result.error) throw new Error(result.error)
 
-I came across ${lead.company} and was impressed by what you're building as ${lead.role}.
+      const { drafts: newRawDrafts } = result
 
-We help companies like yours streamline their outbound sales process and typically see a 40% increase in reply rates.
+      const newDrafts: EmailDraft[] = newRawDrafts.map((d: any, index: number) => {
+        const lead = selectedLeads.find((l) => l.id === d.leadId)!
+        return {
+          id: d.leadId + "-draft-" + Date.now(),
+          leadId: lead.id,
+          lead: {
+            ...lead,
+            status: "New",
+            segment: "Mid-Market",
+            lastActivity: "Just now"
+          },
+          subject: d.subject,
+          body: d.body,
+          status: d.status,
+          createdAt: new Date().toISOString(),
+          // Store research notes if needed in the future, e.g. in a 'metadata' field
+        }
+      })
 
-Would you be open to a quick 15-minute call this week?
-
-Best regards,
-Alex`,
-      status: "drafted",
-      createdAt: new Date().toISOString(),
-    }))
-
-    setDrafts((prev) => [...newDrafts, ...prev])
-    setCurrentBatch((prev) => (prev ? { ...prev, status: "ready", draftedCount: newDrafts.length } : null))
-    setIsDrafting(false)
-    setImportedLeads([])
-  }, [importedLeads])
+      setDrafts((prev) => [...newDrafts, ...prev])
+      setCurrentBatch((prev) => (prev ? { ...prev, status: "ready", draftedCount: newDrafts.length } : null))
+      setImportedLeads([])
+    } catch (error) {
+      console.error("Failed to generate drafts:", error)
+      // Ideally show a toast here
+    } finally {
+      setIsDrafting(false)
+    }
+  }, [importedLeads, promptTemplate])
 
   const updateDraft = useCallback((draftId: string, updates: Partial<EmailDraft>) => {
     setDrafts((prev) => prev.map((d) => (d.id === draftId ? { ...d, ...updates } : d)))

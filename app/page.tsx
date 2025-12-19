@@ -12,59 +12,10 @@ import { ArrowRight, Sparkles, Loader2, Code2, Users, CheckCircle2 } from "lucid
 import type { ImportedLead } from "@/types"
 import Link from "next/link"
 
-function parseFile(file: File): Promise<ImportedLead[]> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: "i1",
-          firstName: "Alice",
-          lastName: "Johnson",
-          email: "alice@burnmediagroup.com",
-          company: "Burn Media Group",
-          role: "CTO",
-          selected: true,
-        },
-        {
-          id: "i2",
-          firstName: "Bob",
-          lastName: "Smith",
-          email: "bob@mambaonline.com",
-          company: "MambaOnline",
-          role: "CEO",
-          selected: true,
-        },
-        {
-          id: "i3",
-          firstName: "Carol",
-          lastName: "White",
-          email: "carol@capetown.co.za",
-          company: "Cape Town",
-          role: "VP Sales",
-          selected: true,
-        },
-        {
-          id: "i4",
-          firstName: "David",
-          lastName: "Brown",
-          email: "david@burnmediagroup.com",
-          company: "Burn Media Group",
-          role: "Director",
-          selected: true,
-        },
-        {
-          id: "i5",
-          firstName: "Eve",
-          lastName: "Davis",
-          email: "eve@mambaonline.com",
-          company: "MambaOnline",
-          role: "Manager",
-          selected: true,
-        },
-      ])
-    }, 800)
-  })
-}
+
+import { MappingResult } from "@/lib/agents/mapping-agent"
+
+// ... imports
 
 export default function LeadsPage() {
   const {
@@ -84,13 +35,54 @@ export default function LeadsPage() {
 
   const [isParsing, setIsParsing] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [mappingStatus, setMappingStatus] = useState<string | null>(null)
 
   const handleFileAccepted = useCallback(
     async (file: File) => {
       setIsParsing(true)
-      const leads = await parseFile(file)
-      importLeads(leads)
-      setIsParsing(false)
+      setMappingStatus("Uploading and parsing file...")
+
+      try {
+        // 1. Ingest
+        const formData = new FormData()
+        formData.append("file", file)
+        const ingestRes = await fetch("/api/ingest", {
+          method: "POST",
+          body: formData,
+        })
+        const { data } = await ingestRes.json()
+
+        if (!data || data.length === 0) throw new Error("No data found in file")
+
+        // 2. Identify Columns
+        setMappingStatus("Identifying columns with AI...")
+        const headers = Object.keys(data[0])
+        const mapRes = await fetch("/api/map", {
+          method: "POST",
+          body: JSON.stringify({ headers, sampleRows: data.slice(0, 5) }),
+        })
+        const { mapping }: { mapping: MappingResult } = await mapRes.json()
+
+        // 3. Transform Data
+        setMappingStatus("Mapping data...")
+        const mappedLeads: ImportedLead[] = data.map((row: any, idx: number) => ({
+          id: `lead-${Date.now()}-${idx}`,
+          firstName: row[mapping.firstName] || "",
+          lastName: row[mapping.lastName] || "",
+          email: row[mapping.email] || "",
+          company: row[mapping.company] || "",
+          role: row[mapping.role || ""] || "",
+          selected: true,
+        })).filter((l: ImportedLead) => l.email) // Filter out rows without email
+
+        importLeads(mappedLeads)
+      } catch (error) {
+        console.error("Import failed:", error)
+        // Ideally show error toast
+      } finally {
+        setIsParsing(false)
+        setMappingStatus(null)
+      }
     },
     [importLeads],
   )
@@ -152,7 +144,7 @@ export default function LeadsPage() {
             {isParsing && (
               <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Parsing your file...
+                {mappingStatus || "Processing file..."}
               </div>
             )}
 
