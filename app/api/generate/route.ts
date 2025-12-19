@@ -2,11 +2,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { researchLead } from "@/lib/agents/research-agent";
 import { draftEmail } from "@/lib/agents/drafting-agent";
+import { sendEmail } from "@/lib/services/everlytic";
 import { ImportedLead } from "@/types";
 
 export async function POST(req: NextRequest) {
     try {
-        const { leads, promptTemplate } = await req.json();
+        const { leads, promptTemplate, sendImmediately = false } = await req.json();
 
         if (!leads || !Array.isArray(leads)) {
             return NextResponse.json(
@@ -26,12 +27,25 @@ export async function POST(req: NextRequest) {
                     // 2. Draft
                     const draft = await draftEmail(lead, summary, promptTemplate);
 
+                    // 3. Send (if requested)
+                    let sendResult = null;
+                    if (sendImmediately) {
+                        sendResult = await sendEmail({
+                            to: lead.email,
+                            subject: draft.subject,
+                            body: draft.body,
+                        });
+                    }
+
                     return {
                         leadId: lead.id,
                         subject: draft.subject,
                         body: draft.body,
-                        status: "drafted",
+                        status: sendImmediately
+                            ? (sendResult?.success ? "sent" : "failed")
+                            : "drafted",
                         researchSummary: summary, // Optional: return research to UI if needed
+                        sendResult: sendResult,
                     };
                 } catch (err) {
                     console.error(`Failed to process lead ${lead.id}:`, err);

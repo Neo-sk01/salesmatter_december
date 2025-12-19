@@ -89,3 +89,9 @@ export type DailyMetric = {
   opened: number
   replied: number
 }
+
+export type EmailSendResult = {
+  success: boolean
+  error?: string
+  details?: any
+}
