@@ -38,6 +38,7 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
                 from: senderEmail,
                 to: to,
                 subject: subject,
+                reply_to: senderEmail,
             },
             body: {
                 html: body,
