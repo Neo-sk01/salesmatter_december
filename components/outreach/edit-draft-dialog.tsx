@@ -81,7 +81,7 @@ export function EditDraftDialog({ draft, open, onOpenChange, onSave, onSend }: E
                     </div>
                 </div>
 
-                <DialogFooter className="gap-2 sm:gap-0">
+                <DialogFooter className="gap-2">
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
