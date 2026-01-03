@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { EmailDraftCard } from "./email-draft-card"
+import { EditDraftDialog } from "./edit-draft-dialog"
 import { Send, CheckSquare, Square, Loader2 } from "lucide-react"
 import type { EmailDraft } from "@/types"
 
@@ -18,6 +19,7 @@ type Props = {
 export function DraftsList({ drafts, onUpdate, onSend, onSendBulk, onDelete }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isSending, setIsSending] = useState(false)
+  const [editingDraft, setEditingDraft] = useState<EmailDraft | null>(null)
 
   const pendingDrafts = drafts.filter((d) => d.status !== "sent")
 
@@ -92,9 +94,18 @@ export function DraftsList({ drafts, onUpdate, onSend, onSendBulk, onDelete }: P
             onUpdate={onUpdate}
             onSend={onSend}
             onDelete={onDelete}
+            onEdit={() => setEditingDraft(draft)}
           />
         ))}
       </div>
+
+      <EditDraftDialog
+        draft={editingDraft}
+        open={!!editingDraft}
+        onOpenChange={(open) => !open && setEditingDraft(null)}
+        onSave={onUpdate}
+        onSend={onSend}
+      />
 
       {drafts.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8 text-center rounded-lg border border-dashed border-border">

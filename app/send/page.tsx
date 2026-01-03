@@ -5,12 +5,14 @@ import { DashboardShell } from "@/components/dashboard-shell"
 import { DraftsList } from "@/components/outreach/drafts-list"
 import { Button } from "@/components/ui/button"
 import { useOutreach } from "@/hooks/use-outreach"
-import { Send, CheckCircle2, Zap, FileEdit } from "lucide-react"
+import { ComposeEmailDialog } from "@/components/outreach/compose-email-dialog"
+import { Send, CheckCircle2, Zap, FileEdit, Plus } from "lucide-react"
 import Link from "next/link"
 
 export default function SendPage() {
-  const { drafts, updateDraft, sendEmail, sendBulk, deleteDraft } = useOutreach()
+  const { drafts, updateDraft, sendEmail, sendBulk, deleteDraft, sendNewEmail } = useOutreach()
   const [lastSent, setLastSent] = useState<string | null>(null)
+  const [isComposeOpen, setIsComposeOpen] = useState(false)
 
   const pendingDrafts = drafts.filter((d) => d.status !== "sent")
   const sentDrafts = drafts.filter((d) => d.status === "sent")
@@ -21,6 +23,17 @@ export default function SendPage() {
     if (draft) {
       setLastSent(`${draft.lead.firstName} ${draft.lead.lastName}`)
       setTimeout(() => setLastSent(null), 3000)
+    }
+  }
+
+  const handleSendNewEmail = async (to: string, subject: string, body: string) => {
+    try {
+      await sendNewEmail(to, subject, body)
+      setLastSent(to)
+      setTimeout(() => setLastSent(null), 3000)
+    } catch (error) {
+      // Error handling is done in the hook via console, but we could add toast here
+      console.error("Failed to send email", error)
     }
   }
 
@@ -37,11 +50,21 @@ export default function SendPage() {
           </div>
           {pendingDrafts.length > 0 && (
             <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setIsComposeOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Compose
+              </Button>
               <Button onClick={() => sendBulk(pendingDrafts.map((d) => d.id))} className="gap-2">
                 <Zap className="h-4 w-4" />
                 Send All ({pendingDrafts.length})
               </Button>
             </div>
+          )}
+          {pendingDrafts.length === 0 && (
+            <Button variant="outline" onClick={() => setIsComposeOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Compose
+            </Button>
           )}
         </div>
 
@@ -110,6 +133,12 @@ export default function SendPage() {
           </div>
         </div>
       </div>
+
+      <ComposeEmailDialog
+        open={isComposeOpen}
+        onOpenChange={setIsComposeOpen}
+        onSend={handleSendNewEmail}
+      />
     </DashboardShell>
   )
 }

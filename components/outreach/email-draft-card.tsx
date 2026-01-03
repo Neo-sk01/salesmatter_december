@@ -17,6 +17,7 @@ type Props = {
   onUpdate: (id: string, updates: Partial<EmailDraft>) => void
   onSend: (id: string) => void
   onDelete: (id: string) => void
+  onEdit: () => void
 }
 
 const statusConfig = {
@@ -27,22 +28,9 @@ const statusConfig = {
   failed: { label: "Failed", color: "bg-red-100 text-red-700" },
 }
 
-export function EmailDraftCard({ draft, isSelected, onSelect, onUpdate, onSend, onDelete }: Props) {
+export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, onEdit }: Props) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [editedSubject, setEditedSubject] = useState(draft.subject)
-  const [editedBody, setEditedBody] = useState(draft.body)
 
-  const handleSave = () => {
-    onUpdate(draft.id, { subject: editedSubject, body: editedBody, status: "reviewed" })
-    setIsEditing(false)
-  }
-
-  const handleCancel = () => {
-    setEditedSubject(draft.subject)
-    setEditedBody(draft.body)
-    setIsEditing(false)
-  }
 
   const isSent = draft.status === "sent"
 
@@ -106,10 +94,7 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onUpdate, onSend, 
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => {
-                  setIsEditing(!isEditing)
-                  setIsExpanded(true)
-                }}
+                onClick={onEdit}
                 title="Edit draft"
               >
                 <Pencil className="h-3.5 w-3.5" />
@@ -147,55 +132,19 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onUpdate, onSend, 
       </div>
 
       {/* Expanded Content */}
-      {(isExpanded || isEditing) && (
+      {isExpanded && (
         <div className="px-4 pb-4 pt-0">
           <div className="space-y-4 border-t border-border pt-4">
-            {isEditing ? (
-              <>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Subject</label>
-                  <Input
-                    value={editedSubject}
-                    onChange={(e) => setEditedSubject(e.target.value)}
-                    className="h-9 text-sm"
-                    placeholder="Email subject..."
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Body</label>
-                  <Textarea
-                    value={editedBody}
-                    onChange={(e) => setEditedBody(e.target.value)}
-                    rows={8}
-                    className="resize-none text-sm leading-relaxed"
-                    placeholder="Email body..."
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="outline" size="sm" onClick={handleCancel} className="h-8 text-xs bg-transparent">
-                    <X className="mr-1.5 h-3 w-3" />
-                    Cancel
-                  </Button>
-                  <Button size="sm" onClick={handleSave} className="h-8 text-xs">
-                    <Check className="mr-1.5 h-3 w-3" />
-                    Save Changes
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Subject</p>
-                  <p className="text-sm font-medium text-foreground">{draft.subject}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Body</p>
-                  <div className="rounded-md bg-muted/30 p-3">
-                    <p className="text-sm whitespace-pre-wrap text-foreground/80 leading-relaxed">{draft.body}</p>
-                  </div>
-                </div>
-              </>
-            )}
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Subject</p>
+              <p className="text-sm font-medium text-foreground">{draft.subject}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Body</p>
+              <div className="rounded-md bg-muted/30 p-3">
+                <p className="text-sm whitespace-pre-wrap text-foreground/80 leading-relaxed">{draft.body}</p>
+              </div>
+            </div>
           </div>
         </div>
       )}

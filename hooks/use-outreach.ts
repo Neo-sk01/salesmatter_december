@@ -459,22 +459,104 @@ export function useOutreach() {
   }, [])
 
   const sendEmail = useCallback(async (draftId: string) => {
-    setDrafts((prev) =>
-      prev.map((d) => (d.id === draftId ? { ...d, status: "sent", sentAt: new Date().toISOString() } : d)),
-    )
-  }, [])
+    const draft = drafts.find((d) => d.id === draftId)
+    if (!draft) return
 
-  const sendBulk = useCallback(async (draftIds: string[]) => {
-    for (const id of draftIds) {
-      await new Promise((resolve) => setTimeout(resolve, 200))
+    try {
+      const response = await fetch("/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ drafts: [draft] }),
+      })
+
+      const result = await response.json()
+      if (result.error) throw new Error(result.error)
+
       setDrafts((prev) =>
-        prev.map((d) => (d.id === id ? { ...d, status: "sent", sentAt: new Date().toISOString() } : d)),
+        prev.map((d) => (d.id === draftId ? { ...d, status: "sent", sentAt: new Date().toISOString() } : d)),
+      )
+    } catch (error) {
+      console.error("Failed to send email:", error)
+      setDrafts((prev) =>
+        prev.map((d) => (d.id === draftId ? { ...d, status: "failed" } : d)),
       )
     }
-  }, [])
+  }, [drafts])
+
+  const sendBulk = useCallback(async (draftIds: string[]) => {
+    const draftsToSend = drafts.filter((d) => draftIds.includes(d.id))
+    if (draftsToSend.length === 0) return
+
+    try {
+      const response = await fetch("/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ drafts: draftsToSend }),
+      })
+
+      const result = await response.json()
+
+      // Update statuses based on results
+      const results = result.results || []
+      const successIds = new Set(results.filter((r: any) => r.status === "sent").map((r: any) =>
+        // We match by email as leadId might be tricky if not passed back or unique
+        draftsToSend.find(d => d.lead.email === r.email)?.id
+      ).filter(Boolean))
+
+      setDrafts((prev) =>
+        prev.map((d) => {
+          if (successIds.has(d.id)) {
+            return { ...d, status: "sent", sentAt: new Date().toISOString() }
+          }
+          if (draftIds.includes(d.id) && !successIds.has(d.id)) {
+            // Was attempted but not in success list (or failed)
+            return { ...d, status: "failed" }
+          }
+          return d
+        }),
+      )
+
+    } catch (error) {
+      console.error("Failed to send bulk emails:", error)
+      setDrafts((prev) =>
+        prev.map((d) => (draftIds.includes(d.id) ? { ...d, status: "failed" } : d)),
+      )
+    }
+  }, [drafts])
 
   const deleteDraft = useCallback((draftId: string) => {
     setDrafts((prev) => prev.filter((d) => d.id !== draftId))
+  }, [])
+
+  const sendNewEmail = useCallback(async (to: string, subject: string, body: string) => {
+    try {
+      // Create a temporary draft object for the API
+      const tempDraft = {
+        email: to,
+        subject,
+        body
+      }
+
+      const response = await fetch("/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // The API expects an array of drafts. 
+        // Note: The API interface uses 'email' field, which matches our tempDraft.
+        body: JSON.stringify({ drafts: [tempDraft] }),
+      })
+
+      const result = await response.json()
+      if (result.error) throw new Error(result.error)
+
+      const success = result.results?.[0]?.status === "sent"
+      if (!success) throw new Error(result.results?.[0]?.error || "Failed to send email")
+
+      // Optionally, we could add this sent email to the drafts list as a "Sent" item
+      // But for now we just return success/failure
+    } catch (error) {
+      console.error("Failed to send new email:", error)
+      throw error // Re-throw so UI can handle it
+    }
   }, [])
 
   const resetFlow = useCallback(() => {
@@ -496,6 +578,7 @@ export function useOutreach() {
     updateDraft,
     sendEmail,
     sendBulk,
+    sendNewEmail,
     deleteDraft,
     resetFlow,
     metrics,
