@@ -4,6 +4,15 @@ import { researchLead } from "@/lib/agents/research-agent";
 import { draftEmail } from "@/lib/agents/drafting-agent";
 import { sendEmail } from "@/lib/services/everlytic";
 import { ImportedLead } from "@/types";
+import { createClient } from "@supabase/supabase-js";
+
+// Lazy init Supabase
+function getSupabase() {
+    return createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+}
 
 export async function POST(req: NextRequest) {
     try {
@@ -37,14 +46,41 @@ export async function POST(req: NextRequest) {
                         });
                     }
 
+                    const status = sendImmediately
+                        ? (sendResult?.success ? "sent" : "failed")
+                        : "drafted";
+
+                    // Save to DB
+                    const supabase = getSupabase();
+                    let draftId = crypto.randomUUID();
+
+                    const { data: savedDraft, error: saveError } = await supabase
+                        .from("email_drafts")
+                        .insert({
+                            lead_id: lead.id,
+                            subject: draft.subject,
+                            body: draft.body,
+                            status: status,
+                            research_summary: summary,
+                            sent_at: sendImmediately && sendResult?.success ? new Date().toISOString() : null
+                        })
+                        .select()
+                        .single();
+
+                    if (saveError) {
+                        console.error("Failed to save draft:", saveError);
+                        // fallback to generated ID
+                    } else {
+                        draftId = savedDraft.id;
+                    }
+
                     return {
+                        id: draftId,
                         leadId: lead.id,
                         subject: draft.subject,
                         body: draft.body,
-                        status: sendImmediately
-                            ? (sendResult?.success ? "sent" : "failed")
-                            : "drafted",
-                        researchSummary: summary, // Optional: return research to UI if needed
+                        status: status,
+                        researchSummary: summary,
                         sendResult: sendResult,
                     };
                 } catch (err) {

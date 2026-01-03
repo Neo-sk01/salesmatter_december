@@ -191,6 +191,46 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         return DEFAULT_PROMPT_TEMPLATE
     })
 
+    // Load drafts from DB on mount
+    useEffect(() => {
+        const fetchDrafts = async () => {
+            try {
+                const res = await fetch("/api/drafts")
+                if (!res.ok) throw new Error("Failed to fetch drafts")
+                const data = await res.json()
+
+                // Map DB drafts to frontend EmailDraft type
+                const formattedDrafts: EmailDraft[] = data.drafts.map((d: any) => ({
+                    id: d.id,
+                    leadId: d.lead_id,
+                    lead: {
+                        id: d.leads.id,
+                        firstName: d.leads.first_name,
+                        lastName: d.leads.last_name,
+                        email: d.leads.email,
+                        company: d.leads.company,
+                        role: d.leads.role,
+                        status: d.leads.status as any,
+                        segment: "Mid-Market", // default
+                        lastActivity: "Imported"
+                    },
+                    subject: d.subject,
+                    body: d.body,
+                    status: d.status,
+                    createdAt: d.created_at,
+                    sentAt: d.sent_at,
+                    researchSummary: d.research_summary
+                }))
+
+                setDrafts(formattedDrafts)
+            } catch (error) {
+                console.error("Error loading drafts:", error)
+            }
+        }
+
+        fetchDrafts()
+    }, [])
+
     // Persist to localStorage whenever it changes
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -245,7 +285,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             const newDrafts: EmailDraft[] = newRawDrafts.map((d: any, index: number) => {
                 const lead = selectedLeads.find((l) => l.id === d.leadId)!
                 return {
-                    id: d.leadId + "-draft-" + Date.now(),
+                    id: d.id, // Use DB ID
                     leadId: lead.id,
                     lead: {
                         ...lead,
@@ -270,8 +310,20 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         }
     }, [importedLeads, promptTemplate])
 
-    const updateDraft = useCallback((draftId: string, updates: Partial<EmailDraft>) => {
+    const updateDraft = useCallback(async (draftId: string, updates: Partial<EmailDraft>) => {
+        // Optimistic update
         setDrafts((prev) => prev.map((d) => (d.id === draftId ? { ...d, ...updates } : d)))
+
+        try {
+            await fetch(`/api/drafts/${draftId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updates)
+            })
+        } catch (error) {
+            console.error("Failed to update draft:", error)
+            // Revert? For now, just log.
+        }
     }, [])
 
     const sendEmail = useCallback(async (draftId: string) => {
@@ -340,8 +392,13 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         }
     }, [drafts])
 
-    const deleteDraft = useCallback((draftId: string) => {
+    const deleteDraft = useCallback(async (draftId: string) => {
         setDrafts((prev) => prev.filter((d) => d.id !== draftId))
+        try {
+            await fetch(`/api/drafts/${draftId}`, { method: "DELETE" })
+        } catch (error) {
+            console.error("Failed to delete draft:", error)
+        }
     }, [])
 
     const sendNewEmail = useCallback(async (to: string, subject: string, body: string) => {

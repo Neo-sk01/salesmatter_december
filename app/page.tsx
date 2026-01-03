@@ -50,32 +50,60 @@ export default function LeadsPage() {
           method: "POST",
           body: formData,
         })
-        const { data } = await ingestRes.json()
+        if (ingestRes.ok) {
+          const result = await ingestRes.json()
 
-        if (!data || data.length === 0) throw new Error("No data found in file")
+          if (result.fileId) {
+            // New flow: Server-side processed
+            setMappingStatus("Loading processed leads...")
+            const leadsRes = await fetch(`/api/files/${result.fileId}/leads`)
+            const { leads } = await leadsRes.json()
 
-        // 2. Identify Columns
-        setMappingStatus("Identifying columns with AI...")
-        const headers = Object.keys(data[0])
-        const mapRes = await fetch("/api/map", {
-          method: "POST",
-          body: JSON.stringify({ headers, sampleRows: data.slice(0, 5) }),
-        })
-        const { mapping }: { mapping: MappingResult } = await mapRes.json()
+            if (leads && leads.length > 0) {
+              const mappedLeads: ImportedLead[] = leads.map((l: any) => ({
+                id: l.id,
+                firstName: l.first_name || l.firstName || "",
+                lastName: l.last_name || l.lastName || "",
+                email: l.email || "",
+                company: l.company || "",
+                role: l.role || "",
+                selected: true,
+              }))
+              importLeads(mappedLeads)
+              return
+            }
+          }
 
-        // 3. Transform Data
-        setMappingStatus("Mapping data...")
-        const mappedLeads: ImportedLead[] = data.map((row: any, idx: number) => ({
-          id: `lead-${Date.now()}-${idx}`,
-          firstName: row[mapping.firstName] || "",
-          lastName: row[mapping.lastName] || "",
-          email: row[mapping.email] || "",
-          company: row[mapping.company] || "",
-          role: row[mapping.role || ""] || "",
-          selected: true,
-        })).filter((l: ImportedLead) => l.email) // Filter out rows without email
+          // Fallback to legacy client-side flow if data returned
+          const { data } = result
+          if (data && data.length > 0) {
+            // 2. Identify Columns
+            setMappingStatus("Identifying columns with AI...")
+            const headers = Object.keys(data[0])
+            const mapRes = await fetch("/api/map", {
+              method: "POST",
+              body: JSON.stringify({ headers, sampleRows: data.slice(0, 5) }),
+            })
+            const { mapping }: { mapping: MappingResult } = await mapRes.json()
 
-        importLeads(mappedLeads)
+            // 3. Transform Data
+            setMappingStatus("Mapping data...")
+            const mappedLeads: ImportedLead[] = data.map((row: any, idx: number) => ({
+              id: `lead-${Date.now()}-${idx}`,
+              firstName: row[mapping.firstName] || "",
+              lastName: row[mapping.lastName] || "",
+              email: row[mapping.email] || "",
+              company: row[mapping.company] || "",
+              role: row[mapping.role || ""] || "",
+              selected: true,
+            })).filter((l: ImportedLead) => l.email)
+
+            importLeads(mappedLeads)
+            return
+          }
+        }
+
+        throw new Error("No data found in file")
       } catch (error) {
         console.error("Import failed:", error)
         // Ideally show error toast

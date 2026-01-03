@@ -35,7 +35,7 @@ export function AppSidebar() {
     <aside className="flex h-screen w-56 flex-col border-r border-border bg-sidebar">
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-border">
-        <img src="/salesmatter-logo.svg" alt="SalesMatter" className="h-8 w-auto" />
+        <img src="/salesmatter-logo.svg" alt="SalesMatter" className="h-[2.2rem] w-auto" />
       </div>
 
       {/* Navigation */}

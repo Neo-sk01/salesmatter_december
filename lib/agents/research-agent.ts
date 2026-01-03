@@ -1,12 +1,37 @@
 
 import { ChatOpenAI } from "@langchain/openai";
+import { TavilySearch } from "@langchain/tavily";
 import { ImportedLead } from "@/types";
 import { CallbackHandler } from "langfuse-langchain";
 
 export async function researchLead(lead: ImportedLead): Promise<string> {
     const handler = new CallbackHandler({
-        userId: "system", // or dynamic user id
+        userId: "system",
     });
+
+    // Initialize Tavily search tool
+    const tavilyApiKey = process.env.TAVILY_API_KEY;
+
+    let searchResults = "";
+
+    if (tavilyApiKey) {
+        try {
+            const searchTool = new TavilySearch({
+                maxResults: 5,
+            });
+
+            // Search for recent news about the company and person
+            const searchQuery = `${lead.company} ${lead.firstName} ${lead.lastName} ${lead.role} recent news`;
+            const results = await searchTool.invoke({ query: searchQuery });
+            searchResults = typeof results === 'string' ? results : JSON.stringify(results);
+        } catch (err) {
+            console.error("Tavily search failed:", err);
+            searchResults = "No external search results available.";
+        }
+    } else {
+        console.warn("TAVILY_API_KEY not set. Using model's internal knowledge only.");
+        searchResults = "No external search results available (API key not configured).";
+    }
 
     const model = new ChatOpenAI({
         modelName: "gpt-4o-mini",
@@ -14,25 +39,26 @@ export async function researchLead(lead: ImportedLead): Promise<string> {
         callbacks: [handler],
     });
 
-    // In a real scenario, this would use a Search Tool (e.g., Tavily, SerpAPI)
-    // Since we don't have a guaranteed search API key, we will simulate "knowledge" 
-    // or use the model's internal knowledge extended with specific prompt instructions.
-    // Ideally, we would stick a tool.invoke() here.
-
-    // Placeholder for search results (removed)
-
     const prompt = `
-    You are a researcher.Your goal is to research a prospect for cold outreach.
+    You are a researcher preparing context for cold outreach.
 
     Prospect:
     - Name: ${lead.firstName} ${lead.lastName}
     - Company: ${lead.company}
     - Role: ${lead.role}
     
-    Context found:
-    No external context available. Rely on your internal knowledge about the company if widely known, or extract general business context based on the role and industry.
-
-    Task: Write a 150 - word summary of this person / company focusing on recent activity, news, or personal professional updates that can be used as a hook in an email.
+    Search Results:
+    ${searchResults}
+    
+    Task: Write a focused 150-word summary of this person/company based on the search results above.
+    Focus on:
+    - Recent news, announcements, or achievements
+    - Company initiatives or product launches
+    - Personal professional updates or thought leadership
+    - Anything that could serve as a conversation hook
+    
+    If the search results are limited, supplement with general knowledge about the company/industry.
+    Be factual and specific where possible.
   `;
 
     const response = await model.invoke(prompt);

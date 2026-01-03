@@ -48,6 +48,7 @@ export type EmailDraft = {
   status: "pending" | "drafted" | "reviewed" | "sent" | "failed"
   createdAt: string
   sentAt?: string
+  researchSummary?: string
 }
 
 export type OutreachBatch = {

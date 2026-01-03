@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Send, Pencil, Trash2, Check, X, ChevronDown, ChevronUp, Mail, Building2, User } from "lucide-react"
+import { Send, Pencil, Trash2, Check, X, ChevronDown, ChevronUp, Mail, Building2, User, Search } from "lucide-react"
+import { ResearchModal } from "@/components/outreach/research-modal"
 import { cn } from "@/lib/utils"
 import type { EmailDraft } from "@/types"
 
@@ -88,6 +89,16 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, 
         </div>
 
         <div className="flex items-center gap-0.5 flex-shrink-0">
+          <ResearchModal draft={draft}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              title="View research"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </Button>
+          </ResearchModal>
           {!isSent && (
             <>
               <Button

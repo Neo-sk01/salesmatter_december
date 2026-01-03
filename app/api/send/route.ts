@@ -2,7 +2,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/services/everlytic";
 
+import { createClient } from "@supabase/supabase-js";
+
+function getSupabase() {
+    return createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+}
+
 export interface EmailDraft {
+    id?: string;
     leadId?: string;
     email: string;
     subject: string;
@@ -30,7 +40,17 @@ export async function POST(req: NextRequest) {
                         body: draft.body,
                     });
 
+                    const supabase = getSupabase();
+
+                    if (draft.id) {
+                        await supabase.from("email_drafts").update({
+                            status: result.success ? "sent" : "failed",
+                            sent_at: result.success ? new Date().toISOString() : null
+                        }).eq("id", draft.id);
+                    }
+
                     return {
+                        id: draft.id,
                         leadId: draft.leadId,
                         email: draft.email,
                         status: result.success ? "sent" : "failed",
