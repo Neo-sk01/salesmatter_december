@@ -2,9 +2,9 @@
 
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Users, FileEdit, Send, Settings, ChevronDown, Building2, BarChart3 } from "lucide-react"
+import { Users, FileEdit, Send, Settings, ChevronDown, Building2, BarChart3, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { SalesMatterLogo } from "./salesmatter-logo"
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useOutreach } from "@/hooks/use-outreach"
@@ -24,6 +24,7 @@ export function AppSidebar() {
 
   const navItems = [
     { name: "Leads", href: "/", icon: Users, badge: null },
+    { name: "Files", href: "/files", icon: FileText, badge: null },
     { name: "Drafts", href: "/drafts", icon: FileEdit, badge: pendingDrafts > 0 ? pendingDrafts : null },
     { name: "Send", href: "/send", icon: Send, badge: sentCount > 0 ? sentCount : null },
     { name: "Analytics", href: "/analytics", icon: BarChart3, badge: null },
@@ -34,8 +35,7 @@ export function AppSidebar() {
     <aside className="flex h-screen w-56 flex-col border-r border-border bg-sidebar">
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-border">
-        <SalesMatterLogo className="h-7 w-7" />
-        <span className="text-base font-semibold text-foreground">SalesMatter</span>
+        <img src="/salesmatter-logo.svg" alt="SalesMatter" className="h-8 w-auto" />
       </div>
 
       {/* Navigation */}

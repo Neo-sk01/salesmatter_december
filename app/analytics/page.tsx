@@ -85,15 +85,14 @@ export default function AnalyticsPage() {
                     <stat.icon className="h-4 w-4 text-primary" />
                   </div>
                   <div
-                    className={`flex items-center gap-0.5 text-xs font-medium ${
-                      stat.trend === "up" && !stat.title.includes("Bounce")
+                    className={`flex items-center gap-0.5 text-xs font-medium ${stat.trend === "up" && !stat.title.includes("Bounce")
                         ? "text-green-600"
                         : stat.trend === "down" && stat.title.includes("Bounce")
                           ? "text-green-600"
                           : stat.trend === "down"
                             ? "text-red-500"
                             : "text-green-600"
-                    }`}
+                      }`}
                   >
                     {stat.trend === "up" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                     {stat.change}
@@ -108,86 +107,103 @@ export default function AnalyticsPage() {
 
         {/* Charts */}
         <div className="grid lg:grid-cols-2 gap-4">
-          {/* Area Chart - Daily Performance */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Daily Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dailyMetrics}>
-                    <defs>
-                      <linearGradient id="colorSent" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(145, 80%, 40%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(145, 80%, 40%)" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorOpened" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(200, 80%, 50%)" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(200, 80%, 50%)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="sent"
-                      stroke="hsl(145, 80%, 40%)"
-                      fillOpacity={1}
-                      fill="url(#colorSent)"
-                      strokeWidth={2}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="opened"
-                      stroke="hsl(200, 80%, 50%)"
-                      fillOpacity={1}
-                      fill="url(#colorOpened)"
-                      strokeWidth={2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          {dailyMetrics.length === 0 ? (
+            /* Empty State for Charts */
+            <Card className="lg:col-span-2 border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <TrendingUp className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-medium text-foreground">No analytics data yet</h3>
+                <p className="text-sm max-w-[400px] mt-2">
+                  Once you start sending campaigns, we'll track your daily performance and engagement metrics here.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Area Chart - Daily Performance */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Daily Performance</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={dailyMetrics}>
+                        <defs>
+                          <linearGradient id="colorSent" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(145, 80%, 40%)" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="hsl(145, 80%, 40%)" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="colorOpened" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(200, 80%, 50%)" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="hsl(200, 80%, 50%)" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                        <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="sent"
+                          stroke="hsl(145, 80%, 40%)"
+                          fillOpacity={1}
+                          fill="url(#colorSent)"
+                          strokeWidth={2}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="opened"
+                          stroke="hsl(200, 80%, 50%)"
+                          fillOpacity={1}
+                          fill="url(#colorOpened)"
+                          strokeWidth={2}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Bar Chart - Replies */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Replies by Day</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dailyMetrics}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                        fontSize: "12px",
-                      }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: "11px" }} />
-                    <Bar dataKey="replied" name="Replies" fill="hsl(145, 80%, 40%)" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="opened" name="Opens" fill="hsl(145, 60%, 70%)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+              {/* Bar Chart - Replies */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Replies by Day</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={dailyMetrics}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                        <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                          }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: "11px" }} />
+                        <Bar dataKey="replied" name="Replies" fill="hsl(145, 80%, 40%)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="opened" name="Opens" fill="hsl(145, 60%, 70%)" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
 
         {/* Recent Sent Emails */}

@@ -136,28 +136,18 @@ const DEFAULT_PROMPT_TEMPLATE = `<prompt name="BurnMediaOutreach_SalesMatter" ve
   </quickStart>
 </prompt>`
 
-const MOCK_METRICS: EmailMetrics = {
-    sent: 127,
-    delivered: 124,
-    opened: 89,
-    clicked: 34,
-    replied: 23,
-    bounced: 3,
-    openRate: 71.8,
-    clickRate: 27.4,
-    replyRate: 18.5,
-    bounceRate: 2.4,
+const INITIAL_METRICS: EmailMetrics = {
+    sent: 0,
+    delivered: 0,
+    opened: 0,
+    clicked: 0,
+    replied: 0,
+    bounced: 0,
+    openRate: 0,
+    clickRate: 0,
+    replyRate: 0,
+    bounceRate: 0,
 }
-
-const MOCK_DAILY_METRICS: DailyMetric[] = [
-    { date: "Nov 25", sent: 12, opened: 8, replied: 2 },
-    { date: "Nov 26", sent: 15, opened: 11, replied: 3 },
-    { date: "Nov 27", sent: 18, opened: 14, replied: 4 },
-    { date: "Nov 28", sent: 14, opened: 10, replied: 3 },
-    { date: "Nov 29", sent: 20, opened: 15, replied: 5 },
-    { date: "Nov 30", sent: 16, opened: 12, replied: 3 },
-    { date: "Dec 1", sent: 22, opened: 17, replied: 4 },
-]
 
 interface OutreachContextType {
     importedLeads: ImportedLead[]
@@ -178,6 +168,8 @@ interface OutreachContextType {
     resetFlow: () => void
     metrics: EmailMetrics
     dailyMetrics: DailyMetric[]
+    setMetrics: (metrics: EmailMetrics) => void
+    setDailyMetrics: (metrics: DailyMetric[]) => void
     showOnboarding: boolean
     setShowOnboarding: (show: boolean) => void
 }
@@ -206,8 +198,8 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         }
     }, [promptTemplate])
 
-    const [metrics] = useState<EmailMetrics>(MOCK_METRICS)
-    const [dailyMetrics] = useState<DailyMetric[]>(MOCK_DAILY_METRICS)
+    const [metrics, setMetrics] = useState<EmailMetrics>(INITIAL_METRICS)
+    const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([])
     const [showOnboarding, setShowOnboarding] = useState(true)
 
     const importLeads = useCallback((leads: ImportedLead[]) => {
@@ -407,6 +399,8 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         resetFlow,
         metrics,
         dailyMetrics,
+        setMetrics,
+        setDailyMetrics,
         showOnboarding,
         setShowOnboarding,
     }

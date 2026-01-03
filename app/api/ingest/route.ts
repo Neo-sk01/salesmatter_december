@@ -2,6 +2,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize Supabase Client
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,6 +20,7 @@ export async function POST(req: NextRequest) {
 
         const buffer = await file.arrayBuffer();
         const fileType = file.name.split(".").pop()?.toLowerCase();
+        const fileSize = file.size;
 
         let data: any[] = [];
 
@@ -33,7 +40,37 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        return NextResponse.json({ data });
+        // Store file metadata and content in Supabase
+        const { data: insertedFile, error } = await supabase
+            .from("processed_files")
+            .insert({
+                filename: file.name,
+                file_type: fileType,
+                file_size_bytes: fileSize,
+                row_count: data.length,
+                description: `Imported via web interface on ${new Date().toLocaleDateString()}`,
+                status: "ingested",
+                file_data: data, // Store parsed JSON directly
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Supabase insert error:", error);
+            // Return success with data even if save fails? No, better to fail or warn.
+            // For now, fail safely but warn user
+            return NextResponse.json(
+                { error: "Failed to save file to database: " + error.message },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json({
+            success: true,
+            fileId: insertedFile.id,
+            data
+        });
+
     } catch (error) {
         console.error("Error processing file:", error);
         return NextResponse.json(
