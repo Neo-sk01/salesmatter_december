@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
                 email: mapping.email ? row[mapping.email] || '' : '',
                 company: mapping.company ? row[mapping.company] || '' : '',
                 role: mapping.role ? row[mapping.role] || '' : '',
+                linkedin_url: mapping.linkedin ? row[mapping.linkedin] || '' : '',
             })).filter((l: any) => l.email); // Require email
 
             if (leads.length > 0) {

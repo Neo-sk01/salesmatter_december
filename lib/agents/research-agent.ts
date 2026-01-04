@@ -17,11 +17,16 @@ export async function researchLead(lead: ImportedLead): Promise<string> {
     if (tavilyApiKey) {
         try {
             const searchTool = new TavilySearch({
+                tavilyApiKey: tavilyApiKey,
                 maxResults: 5,
             });
 
-            // Search for recent news about the company and person
-            const searchQuery = `${lead.company} ${lead.firstName} ${lead.lastName} ${lead.role} recent news`;
+            // Build search query, including LinkedIn URL if available
+            let searchQuery = `${lead.company} ${lead.firstName} ${lead.lastName} ${lead.role} recent news`;
+            if (lead.linkedinUrl) {
+                searchQuery += ` site:linkedin.com OR ${lead.linkedinUrl}`;
+            }
+
             const results = await searchTool.invoke({ query: searchQuery });
             searchResults = typeof results === 'string' ? results : JSON.stringify(results);
         } catch (err) {
@@ -39,6 +44,11 @@ export async function researchLead(lead: ImportedLead): Promise<string> {
         callbacks: [handler],
     });
 
+    // Build LinkedIn context for prompt
+    const linkedinContext = lead.linkedinUrl
+        ? `- LinkedIn Profile: ${lead.linkedinUrl}`
+        : "";
+
     const prompt = `
     You are a researcher preparing context for cold outreach.
 
@@ -46,6 +56,7 @@ export async function researchLead(lead: ImportedLead): Promise<string> {
     - Name: ${lead.firstName} ${lead.lastName}
     - Company: ${lead.company}
     - Role: ${lead.role}
+    ${linkedinContext}
     
     Search Results:
     ${searchResults}
@@ -55,6 +66,7 @@ export async function researchLead(lead: ImportedLead): Promise<string> {
     - Recent news, announcements, or achievements
     - Company initiatives or product launches
     - Personal professional updates or thought leadership
+    - LinkedIn profile insights (if available)
     - Anything that could serve as a conversation hook
     
     If the search results are limited, supplement with general knowledge about the company/industry.

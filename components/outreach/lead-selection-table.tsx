@@ -44,6 +44,7 @@ export function LeadSelectionTable({ leads, onToggle, onSelectAll }: Props) {
               <TableHead>Email</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>LinkedIn</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -58,6 +59,15 @@ export function LeadSelectionTable({ leads, onToggle, onSelectAll }: Props) {
                 <TableCell className="text-muted-foreground">{lead.email}</TableCell>
                 <TableCell>{lead.company}</TableCell>
                 <TableCell>{lead.role}</TableCell>
+                <TableCell>
+                  {lead.linkedinUrl ? (
+                    <a href={lead.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      Profile
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

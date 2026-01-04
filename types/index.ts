@@ -68,6 +68,7 @@ export type ImportedLead = {
   email: string
   company: string
   role: string
+  linkedinUrl?: string
   selected: boolean
 }
 

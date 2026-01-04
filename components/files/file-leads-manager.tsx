@@ -63,7 +63,8 @@ export function FileLeadsManager({ fileId, initialLeads, filename }: FileLeadsMa
             lastName: "",
             email: "",
             company: "",
-            role: ""
+            role: "",
+            linkedinUrl: ""
         })
         setIsDialogOpen(true)
     }
@@ -201,6 +202,10 @@ export function FileLeadsManager({ fileId, initialLeads, filename }: FileLeadsMa
                             <Label htmlFor="role" className="text-right">Role</Label>
                             <Input id="role" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className="col-span-3" />
                         </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="linkedin" className="text-right">LinkedIn URL</Label>
+                            <Input id="linkedin" value={formData.linkedinUrl} onChange={e => setFormData({ ...formData, linkedinUrl: e.target.value })} className="col-span-3" placeholder="https://linkedin.com/in/..." />
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button onClick={handleSave}>
@@ -240,6 +245,7 @@ function CustomLeadTable({ leads, onToggle, onSelectAll, onEdit, onDelete }: Cus
                     <TableHead>Email</TableHead>
                     <TableHead>Company</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>LinkedIn</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -253,6 +259,15 @@ function CustomLeadTable({ leads, onToggle, onSelectAll, onEdit, onDelete }: Cus
                         <TableCell>{lead.email}</TableCell>
                         <TableCell>{lead.company}</TableCell>
                         <TableCell>{lead.role}</TableCell>
+                        <TableCell>
+                            {lead.linkedinUrl ? (
+                                <a href={lead.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate max-w-[120px] block">
+                                    Profile
+                                </a>
+                            ) : (
+                                <span className="text-muted-foreground">—</span>
+                            )}
+                        </TableCell>
                         <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                                 <Button variant="ghost" size="icon" onClick={() => onEdit(lead)}>
