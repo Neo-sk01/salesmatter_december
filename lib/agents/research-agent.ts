@@ -2,7 +2,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { TavilySearch } from "@langchain/tavily";
 import { ImportedLead } from "@/types";
-import { CallbackHandler } from "langfuse-langchain";
+import { CallbackHandler } from "@langfuse/langchain";
 
 export async function researchLead(lead: ImportedLead): Promise<string> {
     const handler = new CallbackHandler({

@@ -16,9 +16,31 @@ import {
   Bar,
   Legend,
 } from "recharts"
+import { Button } from "@/components/ui/button"
+import { registerWebhookAction } from "@/app/actions/register-webhook"
+import { toast } from "sonner"
 
 export default function AnalyticsPage() {
   const { metrics, dailyMetrics, drafts } = useOutreach()
+
+  const handleRegisterWebhook = async () => {
+    try {
+      const result = await registerWebhookAction()
+      if (result.success) {
+        toast.success("Webhook registered successfully", {
+          description: "Everlytic will now send events to your webhook URL."
+        })
+      } else {
+        toast.error("Failed to register webhook", {
+          description: result.error || "Unknown error occurred"
+        })
+      }
+    } catch (error) {
+      toast.error("An error occurred", {
+        description: "Could not contact the server."
+      })
+    }
+  }
 
   const sentDrafts = drafts.filter((d) => d.status === "sent")
 
@@ -68,11 +90,16 @@ export default function AnalyticsPage() {
   return (
     <DashboardShell>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Track your email performance and optimize your outreach
-          </p>
+        <div className="flex flex-row items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Track your email performance and optimize your outreach
+            </p>
+          </div>
+          <Button onClick={handleRegisterWebhook} variant="outline" size="sm">
+            Register Webhook
+          </Button>
         </div>
 
         {/* Metric Cards */}
@@ -86,12 +113,12 @@ export default function AnalyticsPage() {
                   </div>
                   <div
                     className={`flex items-center gap-0.5 text-xs font-medium ${stat.trend === "up" && !stat.title.includes("Bounce")
+                      ? "text-green-600"
+                      : stat.trend === "down" && stat.title.includes("Bounce")
                         ? "text-green-600"
-                        : stat.trend === "down" && stat.title.includes("Bounce")
-                          ? "text-green-600"
-                          : stat.trend === "down"
-                            ? "text-red-500"
-                            : "text-green-600"
+                        : stat.trend === "down"
+                          ? "text-red-500"
+                          : "text-green-600"
                       }`}
                   >
                     {stat.trend === "up" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}

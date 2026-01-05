@@ -2,7 +2,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { ImportedLead } from "@/types";
 import { z } from "zod";
-import { CallbackHandler } from "langfuse-langchain";
+import { CallbackHandler } from "@langfuse/langchain";
 
 const emailSchema = z.object({
     subject: z.string().describe("The subject line of the email"),

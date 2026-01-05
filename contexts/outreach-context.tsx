@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react"
 import type { EmailDraft, ImportedLead, OutreachBatch, EmailMetrics, DailyMetric } from "@/types"
+import { getAnalyticsData } from "@/app/actions/get-analytics"
 
 const DEFAULT_PROMPT_TEMPLATE = `<prompt name="BurnMediaOutreach_SalesMatter" version="1.0">
   <role>
@@ -191,7 +192,10 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         return DEFAULT_PROMPT_TEMPLATE
     })
 
-    // Load drafts from DB on mount
+    const [metrics, setMetrics] = useState<EmailMetrics>(INITIAL_METRICS)
+    const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([])
+
+    // Load drafts and analytics from DB on mount
     useEffect(() => {
         const fetchDrafts = async () => {
             try {
@@ -228,7 +232,18 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             }
         }
 
+        const fetchAnalytics = async () => {
+            try {
+                const data = await getAnalyticsData()
+                setMetrics(data.metrics)
+                setDailyMetrics(data.dailyMetrics)
+            } catch (error) {
+                console.error("Error loading analytics:", error)
+            }
+        }
+
         fetchDrafts()
+        fetchAnalytics()
     }, [])
 
     // Persist to localStorage whenever it changes
@@ -238,8 +253,6 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         }
     }, [promptTemplate])
 
-    const [metrics, setMetrics] = useState<EmailMetrics>(INITIAL_METRICS)
-    const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([])
     const [showOnboarding, setShowOnboarding] = useState(true)
 
     const importLeads = useCallback((leads: ImportedLead[]) => {

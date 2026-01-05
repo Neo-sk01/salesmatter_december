@@ -34,8 +34,8 @@ function verifyBasicAuth(request: NextRequest): boolean {
     }
 
     try {
-        const expectedUsername = process.env.EVERLYTIC_WEBHOOK_USERNAME;
-        const expectedPassword = process.env.EVERLYTIC_WEBHOOK_PASSWORD;
+        const expectedUsername = process.env.EVERLYTIC_WEBHOOK_USERNAME || process.env.EVERLYTIC_USERNAME;
+        const expectedPassword = process.env.EVERLYTIC_WEBHOOK_PASSWORD || process.env.EVERLYTIC_PASSWORD;
 
         if (!expectedUsername || !expectedPassword) {
             console.error('[everlytic-webhook] Missing webhook auth credentials in environment');
