@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
                 email: mapping.email ? row[mapping.email] || '' : '',
                 company: mapping.company ? row[mapping.company] || '' : '',
                 role: mapping.role ? row[mapping.role] || '' : '',
-                linkedin_url: mapping.linkedin ? row[mapping.linkedin] || '' : '',
+                // Note: linkedin_url column doesn't exist in the current schema
             })).filter((l: any) => l.email); // Require email
 
             if (leads.length > 0) {
@@ -97,7 +97,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             success: true,
             fileId: insertedFile.id,
-            count: data.length
+            count: data.length,
+            data: data // Return parsed data for client-side fallback if server mapping fails
         });
 
     } catch (error) {

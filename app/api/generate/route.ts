@@ -54,10 +54,14 @@ export async function POST(req: NextRequest) {
                     const supabase = getSupabase();
                     let draftId = crypto.randomUUID();
 
+                    // Validate lead.id is a valid UUID, otherwise set to null
+                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                    const leadIdForDb = uuidRegex.test(lead.id) ? lead.id : null;
+
                     const { data: savedDraft, error: saveError } = await supabase
                         .from("email_drafts")
                         .insert({
-                            lead_id: lead.id,
+                            lead_id: leadIdForDb,
                             subject: draft.subject,
                             body: draft.body,
                             status: status,

@@ -41,13 +41,14 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
                 reply_to: senderEmail,
             },
             body: {
-                html: body,
-                text: body.replace(/<[^>]*>/g, ""), // Simple HTML to text conversion
+                html: (body || "").replace(/\n/g, "<br/>"),
+                text: (body || "").replace(/<[^>]*>/g, ""), // Sanitize text version
             },
             attachments: [],
         };
 
         // Make API request
+        console.log('[everlytic-send] Request body:', JSON.stringify(requestBody, null, 2));
         const response = await fetch(apiUrl, {
             method: "POST",
             headers: {
