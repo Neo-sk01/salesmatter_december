@@ -10,7 +10,7 @@ import { Code2, FileEdit, ArrowRight, Sparkles, FolderOpen } from "lucide-react"
 import Link from "next/link"
 
 export default function DraftsPage() {
-  const { drafts, promptTemplate, setPromptTemplate, updateDraft, sendEmail, sendBulk, deleteDraft } = useOutreach()
+  const { drafts, promptTemplate, setPromptTemplate, updateDraft, sendEmail, sendBulk, deleteDraft, regenerateDraft, regeneratingDraftId } = useOutreach()
 
   const pendingDrafts = drafts.filter((d) => d.status !== "sent")
   const reviewedCount = drafts.filter((d) => d.status === "reviewed").length
@@ -61,6 +61,8 @@ export default function DraftsPage() {
                 onSend={sendEmail}
                 onSendBulk={sendBulk}
                 onDelete={deleteDraft}
+                onRegenerate={regenerateDraft}
+                regeneratingId={regeneratingDraftId}
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border rounded-xl bg-muted/20">

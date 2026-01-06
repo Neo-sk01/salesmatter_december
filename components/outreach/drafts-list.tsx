@@ -14,9 +14,11 @@ type Props = {
   onSend: (id: string) => void
   onSendBulk: (ids: string[]) => Promise<void>
   onDelete: (id: string) => void
+  onRegenerate?: (id: string) => void
+  regeneratingId?: string | null
 }
 
-export function DraftsList({ drafts, onUpdate, onSend, onSendBulk, onDelete }: Props) {
+export function DraftsList({ drafts, onUpdate, onSend, onSendBulk, onDelete, onRegenerate, regeneratingId }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isSending, setIsSending] = useState(false)
   const [editingDraft, setEditingDraft] = useState<EmailDraft | null>(null)
@@ -95,6 +97,8 @@ export function DraftsList({ drafts, onUpdate, onSend, onSendBulk, onDelete }: P
             onSend={onSend}
             onDelete={onDelete}
             onEdit={() => setEditingDraft(draft)}
+            onRegenerate={onRegenerate}
+            isRegenerating={regeneratingId === draft.id}
           />
         ))}
       </div>

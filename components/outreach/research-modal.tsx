@@ -139,27 +139,22 @@ export function ResearchModal({ draft, children }: ResearchModalProps) {
                     {sources.length > 0 && (
                         <div className="space-y-3">
                             <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                                Sources
+                                Sources ({sources.length})
                             </h3>
                             <div className="rounded-lg border bg-muted/20 divide-y">
                                 {sources.map((source, i) => (
-                                    <div key={i} className="p-3 text-sm flex items-start gap-2">
-                                        <div className="min-w-[20px] text-muted-foreground text-xs mt-0.5">
-                                            {i + 1}.
-                                        </div>
-                                        <div>
-                                            <a
-                                                href={source.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="font-medium hover:underline text-primary block truncate max-w-[500px]"
-                                            >
-                                                {source.title}
-                                            </a>
-                                            <p className="text-xs text-muted-foreground truncate max-w-[500px]">
-                                                {source.url}
-                                            </p>
-                                        </div>
+                                    <div key={i} className="p-3 text-sm">
+                                        <a
+                                            href={source.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="font-medium hover:underline text-primary block break-words"
+                                        >
+                                            {i + 1}. {source.title}
+                                        </a>
+                                        <p className="text-xs text-muted-foreground break-all mt-1">
+                                            {source.url}
+                                        </p>
                                     </div>
                                 ))}
                             </div>

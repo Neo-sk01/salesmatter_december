@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Send, Pencil, Trash2, Check, X, ChevronDown, ChevronUp, Mail, Building2, User, Search } from "lucide-react"
+import { Send, Pencil, Trash2, Check, X, ChevronDown, ChevronUp, Mail, Building2, User, Search, RefreshCw } from "lucide-react"
 import { ResearchModal } from "@/components/outreach/research-modal"
 import { cn } from "@/lib/utils"
 import type { EmailDraft } from "@/types"
@@ -19,6 +19,8 @@ type Props = {
   onSend: (id: string) => void
   onDelete: (id: string) => void
   onEdit: () => void
+  onRegenerate?: (id: string) => void
+  isRegenerating?: boolean
 }
 
 const statusConfig = {
@@ -29,7 +31,7 @@ const statusConfig = {
   failed: { label: "Failed", color: "bg-red-100 text-red-700" },
 }
 
-export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, onEdit }: Props) {
+export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, onEdit, onRegenerate, isRegenerating }: Props) {
   const [isExpanded, setIsExpanded] = useState(false)
 
 
@@ -110,6 +112,18 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, 
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
+              {onRegenerate && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-amber-600 hover:bg-amber-50"
+                  onClick={() => onRegenerate(draft.id)}
+                  disabled={isRegenerating}
+                  title="Regenerate draft with fresh research"
+                >
+                  <RefreshCw className={cn("h-3.5 w-3.5", isRegenerating && "animate-spin")} />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"

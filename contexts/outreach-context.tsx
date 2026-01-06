@@ -166,6 +166,8 @@ interface OutreachContextType {
     sendBulk: (draftIds: string[]) => Promise<void>
     sendNewEmail: (to: string, subject: string, body: string) => Promise<void>
     deleteDraft: (draftId: string) => void
+    regenerateDraft: (draftId: string) => Promise<void>
+    regeneratingDraftId: string | null
     resetFlow: () => void
     metrics: EmailMetrics
     dailyMetrics: DailyMetric[]
@@ -450,6 +452,63 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         setCurrentBatch(null)
     }, [])
 
+    const [regeneratingDraftId, setRegeneratingDraftId] = useState<string | null>(null)
+
+    const regenerateDraft = useCallback(async (draftId: string) => {
+        const draft = drafts.find((d) => d.id === draftId)
+        if (!draft) return
+
+        setRegeneratingDraftId(draftId)
+
+        try {
+            // Call the generate API with just this lead
+            const leadForRegeneration = {
+                id: draft.leadId,
+                firstName: draft.lead.firstName,
+                lastName: draft.lead.lastName,
+                email: draft.lead.email,
+                company: draft.lead.company,
+                role: draft.lead.role,
+                selected: true
+            }
+
+            const response = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate }),
+            })
+
+            const result = await response.json()
+            if (result.error) throw new Error(result.error)
+
+            const newDraft = result.drafts?.[0]
+            if (newDraft && newDraft.subject && newDraft.body) {
+                // Delete old draft from DB
+                await fetch(`/api/drafts/${draftId}`, { method: "DELETE" })
+
+                // Update local state: replace old draft with new one
+                setDrafts((prev) => prev.map((d) => {
+                    if (d.id === draftId) {
+                        return {
+                            ...d,
+                            id: newDraft.id,
+                            subject: newDraft.subject,
+                            body: newDraft.body,
+                            status: "drafted" as const,
+                            researchSummary: newDraft.researchSummary,
+                            createdAt: new Date().toISOString()
+                        }
+                    }
+                    return d
+                }))
+            }
+        } catch (error) {
+            console.error("Failed to regenerate draft:", error)
+        } finally {
+            setRegeneratingDraftId(null)
+        }
+    }, [drafts, promptTemplate])
+
     const value = {
         importedLeads,
         drafts,
@@ -466,6 +525,8 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         sendBulk,
         sendNewEmail,
         deleteDraft,
+        regenerateDraft,
+        regeneratingDraftId,
         resetFlow,
         metrics,
         dailyMetrics,

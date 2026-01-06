@@ -218,7 +218,7 @@ export function FileSelectorModal({ children, onLeadsStaged }: FileSelectorModal
                 </div>
 
                 {selectedFile && leads.length > 0 && (
-                    <DialogFooter className="gap-2 sm:gap-0">
+                    <DialogFooter className="gap-4 sm:gap-4 mt-4">
                         <Button variant="outline" onClick={handleBack}>
                             Back to Files
                         </Button>
