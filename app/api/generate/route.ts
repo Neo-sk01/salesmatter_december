@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
             leads.map(async (lead: ImportedLead) => {
                 try {
                     // 1. Research
-                    const summary = await researchLead(lead);
+                    const researchResult = await researchLead(lead);
+                    const summary = researchResult.summary;
 
                     // 2. Draft
                     const draft = await draftEmail(lead, summary, promptTemplate);
@@ -58,6 +59,10 @@ export async function POST(req: NextRequest) {
                     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
                     const leadIdForDb = uuidRegex.test(lead.id) ? lead.id : null;
 
+                    // Store the full research result (summary + sources) as a JSON string
+                    // This allows the frontend to parse it and display sources
+                    const researchPayload = JSON.stringify(researchResult);
+
                     const { data: savedDraft, error: saveError } = await supabase
                         .from("email_drafts")
                         .insert({
@@ -65,7 +70,7 @@ export async function POST(req: NextRequest) {
                             subject: draft.subject,
                             body: draft.body,
                             status: status,
-                            research_summary: summary,
+                            research_summary: researchPayload,
                             sent_at: sendImmediately && sendResult?.success ? new Date().toISOString() : null
                         })
                         .select()
@@ -84,7 +89,7 @@ export async function POST(req: NextRequest) {
                         subject: draft.subject,
                         body: draft.body,
                         status: status,
-                        researchSummary: summary,
+                        researchSummary: researchPayload, // Return full payload so sources are available immediately
                         sendResult: sendResult,
                     };
                 } catch (err) {

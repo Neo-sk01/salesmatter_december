@@ -21,6 +21,32 @@ interface ResearchModalProps {
 export function ResearchModal({ draft, children }: ResearchModalProps) {
     const { lead, researchSummary } = draft
 
+    // Parse research summary to handle both simple string (legacy) and JSON string (new structured format)
+    let summaryText = "";
+    let sources: { title: string; url: string }[] = [];
+
+    if (researchSummary) {
+        try {
+            // Try to parse as JSON first
+            if (researchSummary.trim().startsWith("{")) {
+                const parsed = JSON.parse(researchSummary);
+                if (parsed.summary) {
+                    summaryText = parsed.summary;
+                    sources = parsed.sources || [];
+                } else {
+                    // Fallback if JSON but not our expected structure
+                    summaryText = researchSummary;
+                }
+            } else {
+                // Not JSON, just plain text
+                summaryText = researchSummary;
+            }
+        } catch (e) {
+            // JSON parse failed, assume plain text
+            summaryText = researchSummary;
+        }
+    }
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -31,7 +57,7 @@ export function ResearchModal({ draft, children }: ResearchModalProps) {
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh]">
+            <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-primary" />
@@ -42,7 +68,7 @@ export function ResearchModal({ draft, children }: ResearchModalProps) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-6">
+                <div className="space-y-6 overflow-y-auto pr-2 -mr-2">
                     {/* Lead Info Card */}
                     <div className="rounded-lg border bg-muted/30 p-4">
                         <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wide">
@@ -92,13 +118,13 @@ export function ResearchModal({ draft, children }: ResearchModalProps) {
                                 ~150 words
                             </Badge>
                         </div>
-                        <div className="h-[250px] rounded-lg border bg-card p-4 overflow-y-auto">
-                            {researchSummary ? (
+                        <div className="min-h-[150px] rounded-lg border bg-card p-4">
+                            {summaryText ? (
                                 <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                                    {researchSummary}
+                                    {summaryText}
                                 </p>
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
                                     <Search className="h-8 w-8 mb-2 opacity-50" />
                                     <p className="text-sm">No research summary available</p>
                                     <p className="text-xs">
@@ -108,6 +134,37 @@ export function ResearchModal({ draft, children }: ResearchModalProps) {
                             )}
                         </div>
                     </div>
+
+                    {/* Sources Section */}
+                    {sources.length > 0 && (
+                        <div className="space-y-3">
+                            <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
+                                Sources
+                            </h3>
+                            <div className="rounded-lg border bg-muted/20 divide-y">
+                                {sources.map((source, i) => (
+                                    <div key={i} className="p-3 text-sm flex items-start gap-2">
+                                        <div className="min-w-[20px] text-muted-foreground text-xs mt-0.5">
+                                            {i + 1}.
+                                        </div>
+                                        <div>
+                                            <a
+                                                href={source.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="font-medium hover:underline text-primary block truncate max-w-[500px]"
+                                            >
+                                                {source.title}
+                                            </a>
+                                            <p className="text-xs text-muted-foreground truncate max-w-[500px]">
+                                                {source.url}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

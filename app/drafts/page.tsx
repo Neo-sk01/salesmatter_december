@@ -3,9 +3,10 @@
 import { DashboardShell } from "@/components/dashboard-shell"
 import { DraftsList } from "@/components/outreach/drafts-list"
 import { PromptTemplateModal } from "@/components/outreach/prompt-template-modal"
+import { FileSelectorModal } from "@/components/outreach/file-selector-modal"
 import { Button } from "@/components/ui/button"
 import { useOutreach } from "@/hooks/use-outreach"
-import { Code2, FileEdit, ArrowRight, Sparkles } from "lucide-react"
+import { Code2, FileEdit, ArrowRight, Sparkles, FolderOpen } from "lucide-react"
 import Link from "next/link"
 
 export default function DraftsPage() {
@@ -27,6 +28,12 @@ export default function DraftsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <FileSelectorModal>
+              <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+                <FolderOpen className="h-4 w-4" />
+                Select from Files
+              </Button>
+            </FileSelectorModal>
             <PromptTemplateModal template={promptTemplate} onSave={setPromptTemplate}>
               <Button variant="outline" size="sm" className="gap-2 bg-transparent">
                 <Code2 className="h-4 w-4" />
@@ -62,14 +69,22 @@ export default function DraftsPage() {
                 </div>
                 <h3 className="text-base font-medium text-foreground mb-1">No drafts yet</h3>
                 <p className="text-sm text-muted-foreground mb-6 text-center max-w-xs">
-                  Import your leads and generate personalized email drafts with AI
+                  Import your leads or select from saved files to generate personalized email drafts
                 </p>
-                <Link href="/">
-                  <Button className="gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Import Leads
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-3">
+                  <FileSelectorModal>
+                    <Button variant="outline" className="gap-2">
+                      <FolderOpen className="h-4 w-4" />
+                      Select from Files
+                    </Button>
+                  </FileSelectorModal>
+                  <Link href="/">
+                    <Button className="gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Import New Leads
+                    </Button>
+                  </Link>
+                </div>
               </div>
             )}
           </div>

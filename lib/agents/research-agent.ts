@@ -1,41 +1,72 @@
 
 import { ChatOpenAI } from "@langchain/openai";
-import { TavilySearch } from "@langchain/tavily";
 import { ImportedLead } from "@/types";
 import { CallbackHandler } from "@langfuse/langchain";
 
-export async function researchLead(lead: ImportedLead): Promise<string> {
+export interface ResearchResult {
+    summary: string;
+    sources: { title: string; url: string }[];
+}
+
+export async function researchLead(lead: ImportedLead): Promise<ResearchResult> {
     const handler = new CallbackHandler({
         userId: "system",
     });
 
-    // Initialize Tavily search tool
     const tavilyApiKey = process.env.TAVILY_API_KEY;
-
-    let searchResults = "";
+    let searchContext = "";
+    let sources: { title: string; url: string }[] = [];
 
     if (tavilyApiKey) {
         try {
-            const searchTool = new TavilySearch({
-                tavilyApiKey: tavilyApiKey,
-                maxResults: 5,
+            const searchQuery = `${lead.company} ${lead.firstName} ${lead.lastName} ${lead.role} recent news`;
+            // Add LinkedIn site search if URL is available
+            const finalQuery = lead.linkedinUrl
+                ? `${searchQuery} OR site:linkedin.com ${lead.linkedinUrl}`
+                : searchQuery;
+
+            console.log("Searching Tavily:", finalQuery);
+
+            const response = await fetch("https://api.tavily.com/search", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    api_key: tavilyApiKey,
+                    query: finalQuery,
+                    search_depth: "basic",
+                    include_answer: false,
+                    include_images: false,
+                    include_raw_content: false,
+                    max_results: 5,
+                }),
             });
 
-            // Build search query, including LinkedIn URL if available
-            let searchQuery = `${lead.company} ${lead.firstName} ${lead.lastName} ${lead.role} recent news`;
-            if (lead.linkedinUrl) {
-                searchQuery += ` site:linkedin.com OR ${lead.linkedinUrl}`;
+            if (!response.ok) {
+                throw new Error(`Tavily API error: ${response.status} ${response.statusText}`);
             }
 
-            const results = await searchTool.invoke({ query: searchQuery });
-            searchResults = typeof results === 'string' ? results : JSON.stringify(results);
+            const data = await response.json();
+
+            if (data.results && Array.isArray(data.results)) {
+                sources = data.results.map((r: any) => ({
+                    title: r.title,
+                    url: r.url
+                }));
+
+                searchContext = data.results
+                    .map((r: any) => `Title: ${r.title}\nURL: ${r.url}\nContent: ${r.content}`)
+                    .join("\n\n");
+            }
+
         } catch (err) {
             console.error("Tavily search failed:", err);
-            searchResults = "No external search results available.";
+            searchContext = "No external search results available due to an error.";
         }
     } else {
         console.warn("TAVILY_API_KEY not set. Using model's internal knowledge only.");
-        searchResults = "No external search results available (API key not configured).";
+        searchContext = "No external search results available (API key not configured).";
     }
 
     const model = new ChatOpenAI({
@@ -59,7 +90,7 @@ export async function researchLead(lead: ImportedLead): Promise<string> {
     ${linkedinContext}
     
     Search Results:
-    ${searchResults}
+    ${searchContext}
     
     Task: Write a focused 150-word summary of this person/company based on the search results above.
     Focus on:
@@ -74,5 +105,9 @@ export async function researchLead(lead: ImportedLead): Promise<string> {
   `;
 
     const response = await model.invoke(prompt);
-    return response.content.toString();
+
+    return {
+        summary: response.content.toString(),
+        sources: sources
+    };
 }
