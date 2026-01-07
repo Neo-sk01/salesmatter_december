@@ -23,7 +23,7 @@ export function AppSidebar() {
   const sentCount = drafts.filter((d) => d.status === "sent").length
 
   const navItems = [
-    { name: "Leads", href: "/", icon: Users, badge: null },
+    { name: "Leads", href: "/dashboard", icon: Users, badge: null },
     { name: "Files", href: "/files", icon: FileText, badge: null },
     { name: "Drafts", href: "/drafts", icon: FileEdit, badge: pendingDrafts > 0 ? pendingDrafts : null },
     { name: "Send", href: "/send", icon: Send, badge: sentCount > 0 ? sentCount : null },
