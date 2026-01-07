@@ -9,6 +9,17 @@ import { identifyColumns } from "@/lib/agents/mapping-agent";
 export async function POST(req: NextRequest) {
     const supabaseUrl = process.env.SUPABASE_URL!;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+    if (!supabaseUrl || !supabaseKey) {
+        console.error("Missing Supabase credentials in /api/ingest", {
+            hasUrl: !!supabaseUrl,
+            hasKey: !!supabaseKey
+        });
+    }
+    if (!process.env.OPENAI_API_KEY) {
+        console.error("Missing OPENAI_API_KEY in /api/ingest");
+    }
+
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     try {
