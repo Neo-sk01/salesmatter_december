@@ -1,7 +1,5 @@
-
-import { ChatOpenAI } from "@langchain/openai";
+import OpenAI from "openai";
 import { ImportedLead } from "@/types";
-import { CallbackHandler } from "@langfuse/langchain";
 
 export interface ResearchResult {
     summary: string;
@@ -9,75 +7,18 @@ export interface ResearchResult {
 }
 
 export async function researchLead(lead: ImportedLead): Promise<ResearchResult> {
-    const handler = new CallbackHandler({
-        userId: "system",
-    });
-
-    const tavilyApiKey = process.env.TAVILY_API_KEY;
-    let searchContext = "";
-    let sources: { title: string; url: string }[] = [];
-
-    if (tavilyApiKey) {
-        try {
-            const searchQuery = `${lead.company} ${lead.firstName} ${lead.lastName} ${lead.role} recent news`;
-            // Add LinkedIn site search if URL is available
-            const finalQuery = lead.linkedinUrl
-                ? `${searchQuery} OR site:linkedin.com ${lead.linkedinUrl}`
-                : searchQuery;
-
-            console.log("Searching Tavily:", finalQuery);
-
-            const response = await fetch("https://api.tavily.com/search", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    api_key: tavilyApiKey,
-                    query: finalQuery,
-                    search_depth: "basic",
-                    include_answer: false,
-                    include_images: false,
-                    include_raw_content: false,
-                    max_results: 5,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Tavily API error: ${response.status} ${response.statusText}`);
-            }
-
-            const data = await response.json();
-
-            if (data.results && Array.isArray(data.results)) {
-                sources = data.results.map((r: any) => ({
-                    title: r.title,
-                    url: r.url
-                }));
-
-                searchContext = data.results
-                    .map((r: any) => `Title: ${r.title}\nURL: ${r.url}\nContent: ${r.content}`)
-                    .join("\n\n");
-            }
-
-        } catch (err) {
-            console.error("Tavily search failed:", err);
-            searchContext = "No external search results available due to an error.";
-        }
-    } else {
-        console.warn("TAVILY_API_KEY not set. Using model's internal knowledge only.");
-        searchContext = "No external search results available (API key not configured).";
-    }
-
-    const model = new ChatOpenAI({
-        modelName: "gpt-4o-mini",
-        temperature: 0,
-        callbacks: [handler],
+    const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
     });
 
     // Build LinkedIn context for prompt
     const linkedinContext = lead.linkedinUrl
         ? `- LinkedIn Profile: ${lead.linkedinUrl}`
+        : "";
+
+    const searchQuery = `${lead.company} ${lead.firstName} ${lead.lastName} ${lead.role} recent news`;
+    const linkedinQuery = lead.linkedinUrl
+        ? ` Also search for information from their LinkedIn profile: ${lead.linkedinUrl}`
         : "";
 
     const prompt = `
@@ -89,10 +30,9 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
     - Role: ${lead.role}
     ${linkedinContext}
     
-    Search Results:
-    ${searchContext}
+    Please search for: "${searchQuery}"${linkedinQuery}
     
-    Task: Write a focused 150-word summary of this person/company based on the search results above.
+    Task: Based on your web search results, write a focused 150-word summary of this person/company.
     Focus on:
     - Recent news, announcements, or achievements
     - Company initiatives or product launches
@@ -100,14 +40,92 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
     - LinkedIn profile insights (if available)
     - Anything that could serve as a conversation hook
     
-    If the search results are limited, supplement with general knowledge about the company/industry.
-    Be factual and specific where possible.
+    Be factual and specific where possible. Include relevant details from your search results.
   `;
 
-    const response = await model.invoke(prompt);
+    console.log("Using GPT-4o-mini web search for:", searchQuery);
 
-    return {
-        summary: response.content.toString(),
-        sources: sources
-    };
+    try {
+        // Use OpenAI's Responses API with web search tool
+        const response = await openai.responses.create({
+            model: "gpt-4o-mini",
+            tools: [{ type: "web_search_preview" }],
+            input: prompt,
+        });
+
+        // Extract the summary from the response
+        let summary = "";
+        const sources: { title: string; url: string }[] = [];
+
+        // Process the response output items
+        for (const item of response.output) {
+            if (item.type === "message") {
+                // Extract text content from message
+                for (const content of item.content) {
+                    if (content.type === "output_text") {
+                        summary = content.text;
+
+                        // Extract annotations (citations) if available
+                        if ('annotations' in content && Array.isArray(content.annotations)) {
+                            for (const annotation of content.annotations) {
+                                if ('type' in annotation && annotation.type === "url_citation") {
+                                    const urlAnnotation = annotation as { type: string; title?: string; url: string };
+                                    sources.push({
+                                        title: urlAnnotation.title || urlAnnotation.url,
+                                        url: urlAnnotation.url,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        console.log("GPT-4o-mini web search completed successfully");
+        console.log(`Found ${sources.length} sources`);
+
+        return {
+            summary: summary || "No summary generated",
+            sources: sources,
+        };
+    } catch (error) {
+        console.error("GPT-4o-mini web search failed:", error);
+
+        // Fallback to basic completion without web search
+        console.log("Falling back to basic GPT-4o-mini without web search");
+
+        const fallbackResponse = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            temperature: 0,
+            messages: [
+                {
+                    role: "user",
+                    content: `
+                        You are a researcher preparing context for cold outreach.
+
+                        Prospect:
+                        - Name: ${lead.firstName} ${lead.lastName}
+                        - Company: ${lead.company}
+                        - Role: ${lead.role}
+                        ${linkedinContext}
+                        
+                        Task: Write a focused 150-word summary of this person/company based on your knowledge.
+                        Focus on:
+                        - Known information about the company
+                        - Industry context and typical roles
+                        - Anything that could serve as a conversation hook
+                        
+                        Be factual and specific where possible. If you don't have specific information,
+                        focus on general industry knowledge that might be relevant.
+                    `,
+                },
+            ],
+        });
+
+        return {
+            summary: fallbackResponse.choices[0]?.message?.content || "No summary generated",
+            sources: [],
+        };
+    }
 }
