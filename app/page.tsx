@@ -68,6 +68,7 @@ export default function LeadsPage() {
                 company: l.company || "",
                 role: l.role || "",
                 linkedinUrl: l.linkedin_url || l.linkedinUrl || "",
+                companyUrl: l.company_url || l.companyUrl || "",
                 selected: true,
               }))
               importLeads(mappedLeads)
@@ -97,6 +98,7 @@ export default function LeadsPage() {
               company: row[mapping.company] || "",
               role: row[mapping.role || ""] || "",
               linkedinUrl: row[mapping.linkedin || ""] || "",
+              companyUrl: row[mapping.companyUrl || ""] || "",
               selected: true,
             })).filter((l: ImportedLead) => l.email)
 

@@ -8,6 +8,7 @@ const mappingSchema = z.object({
   email: z.string().describe("Column name for Email"),
   company: z.string().describe("Column name for Company Name"),
   linkedin: z.string().nullable().optional().describe("Column name for LinkedIn URL"),
+  companyUrl: z.string().nullable().optional().describe("Column name for Company Website URL"),
   role: z.string().nullable().optional().describe("Column name for Job Title / Role"),
 });
 
@@ -30,7 +31,8 @@ export async function identifyColumns(
     - lastName
     - email
     - company
-    - linkedin (optional)
+    - linkedin (optional - LinkedIn profile URL)
+    - companyUrl (optional - Company website URL)
     - role (optional)
 
     Headers: ${JSON.stringify(headers)}

@@ -11,39 +11,67 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
         apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // Build LinkedIn context for prompt
+    // Build context strings for the prompt
     const linkedinContext = lead.linkedinUrl
         ? `- LinkedIn Profile: ${lead.linkedinUrl}`
         : "";
 
-    const searchQuery = `${lead.company} ${lead.firstName} ${lead.lastName} ${lead.role} recent news`;
-    const linkedinQuery = lead.linkedinUrl
-        ? ` Also search for information from their LinkedIn profile: ${lead.linkedinUrl}`
+    const companyUrlContext = lead.companyUrl
+        ? `- Company Website: ${lead.companyUrl}`
         : "";
 
-    const prompt = `
-    You are a researcher preparing context for cold outreach.
+    // Build search query components
+    const searchComponents: string[] = [
+        lead.company,
+        `${lead.firstName} ${lead.lastName}`,
+        lead.role,
+    ];
 
-    Prospect:
+    // Build explicit search instructions
+    const searchInstructions: string[] = [
+        `Search for "${lead.company}" company news and information`,
+    ];
+
+    if (lead.companyUrl) {
+        searchInstructions.push(`Visit and analyze the company website: ${lead.companyUrl}`);
+    }
+
+    if (lead.linkedinUrl) {
+        searchInstructions.push(`Search for LinkedIn profile information: ${lead.linkedinUrl}`);
+    }
+
+    searchInstructions.push(
+        `Search for "${lead.firstName} ${lead.lastName}" at "${lead.company}" - recent news, updates, or professional activity`
+    );
+
+    const prompt = `
+    You are a researcher preparing context for cold outreach. Use web search to gather accurate, current information.
+
+    Prospect Details:
     - Name: ${lead.firstName} ${lead.lastName}
     - Company: ${lead.company}
     - Role: ${lead.role}
     ${linkedinContext}
-    
-    Please search for: "${searchQuery}"${linkedinQuery}
-    
-    Task: Based on your web search results, write a focused 150-word summary of this person/company.
-    Focus on:
-    - Recent news, announcements, or achievements
-    - Company initiatives or product launches
-    - Personal professional updates or thought leadership
-    - LinkedIn profile insights (if available)
-    - Anything that could serve as a conversation hook
-    
-    Be factual and specific where possible. Include relevant details from your search results.
+    ${companyUrlContext}
+
+    SEARCH INSTRUCTIONS (please perform these searches):
+    ${searchInstructions.map((s, i) => `${i + 1}. ${s}`).join('\n    ')}
+
+    After searching, write a focused 150-word summary that includes:
+    - Recent company news, announcements, or achievements
+    - Company initiatives, products, or services (especially from their website if provided)
+    - Information about ${lead.firstName} ${lead.lastName} - their role, professional updates, or thought leadership
+    - LinkedIn profile insights (if URL was provided)
+    - Any conversation hooks that would be relevant for cold outreach
+
+    Be factual and specific. Cite specific details from your search results.
+    If a company URL was provided, prioritize information from their official website.
   `;
 
-    console.log("Using GPT-4o-mini web search for:", searchQuery);
+    console.log("Using GPT-4o-mini web search with enhanced query:");
+    console.log("  - Company:", lead.company);
+    if (lead.companyUrl) console.log("  - Company URL:", lead.companyUrl);
+    if (lead.linkedinUrl) console.log("  - LinkedIn:", lead.linkedinUrl);
 
     try {
         // Use OpenAI's Responses API with web search tool
@@ -109,6 +137,7 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
                         - Company: ${lead.company}
                         - Role: ${lead.role}
                         ${linkedinContext}
+                        ${companyUrlContext}
                         
                         Task: Write a focused 150-word summary of this person/company based on your knowledge.
                         Focus on:
