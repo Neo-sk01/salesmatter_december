@@ -1,7 +1,10 @@
 /**
  * Everlytic Email Service
  * Handles sending transactional emails via Everlytic API
+ * Uses Node.js https module with IPv4 to avoid connection timeout issues
  */
+
+import https from "https";
 
 export interface EmailParams {
     to: string;
@@ -15,58 +18,106 @@ export interface EmailSendResult {
     details?: any;
 }
 
-export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
-    try {
-        const { to, subject, body } = params;
+// Helper function to make HTTPS requests with IPv4 preference
+function httpsRequest(
+    url: string,
+    options: https.RequestOptions,
+    data: string
+): Promise<{ statusCode: number; body: string }> {
+    return new Promise((resolve, reject) => {
+        const urlObj = new URL(url);
 
-        // Get credentials from environment
-        const username = process.env.EVERLYTIC_USERNAME;
-        const password = process.env.EVERLYTIC_PASSWORD;
-        const senderEmail = process.env.EVERLYTIC_SENDER_EMAIL;
-        const apiUrl = process.env.EVERLYTIC_API_URL;
-
-        if (!username || !password || !senderEmail || !apiUrl) {
-            throw new Error("Missing Everlytic configuration in environment variables");
-        }
-
-        // Create Basic Auth header
-        const authString = Buffer.from(`${username}:${password}`).toString("base64");
-
-        // Construct request body per Everlytic API format
-        const requestBody = {
-            headers: {
-                from: senderEmail,
-                to: to,
-                subject: subject,
-                reply_to: senderEmail,
+        const req = https.request(
+            {
+                hostname: urlObj.hostname,
+                port: 443,
+                path: urlObj.pathname,
+                method: options.method || "POST",
+                headers: options.headers,
+                family: 4, // Force IPv4
+                timeout: 30000,
             },
-            body: {
-                html: (body || "").replace(/\n/g, "<br/>"),
-                text: (body || "").replace(/<[^>]*>/g, ""), // Sanitize text version
-            },
-            attachments: [],
-        };
+            (res) => {
+                let body = "";
+                res.on("data", (chunk) => (body += chunk));
+                res.on("end", () => {
+                    resolve({ statusCode: res.statusCode || 500, body });
+                });
+            }
+        );
 
-        // Make API request
-        console.log('[everlytic-send] Request body:', JSON.stringify(requestBody, null, 2));
-        const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Basic ${authString}`,
-            },
-            body: JSON.stringify(requestBody),
+        req.on("error", reject);
+        req.on("timeout", () => {
+            req.destroy();
+            reject(new Error("Request timeout"));
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
+        req.write(data);
+        req.end();
+    });
+}
+
+export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
+    const { to, subject, body } = params;
+
+    // Get credentials from environment
+    const username = process.env.EVERLYTIC_USERNAME;
+    const password = process.env.EVERLYTIC_PASSWORD;
+    const senderEmail = process.env.EVERLYTIC_SENDER_EMAIL;
+    const apiUrl = process.env.EVERLYTIC_API_URL;
+
+    if (!username || !password || !senderEmail || !apiUrl) {
+        return {
+            success: false,
+            error: "Missing Everlytic configuration in environment variables",
+        };
+    }
+
+    // Create Basic Auth header
+    const authString = Buffer.from(`${username}:${password}`).toString("base64");
+
+    // Construct request body per Everlytic API format
+    const requestBody = {
+        headers: {
+            from: senderEmail,
+            to: to,
+            subject: subject,
+            reply_to: senderEmail,
+        },
+        body: {
+            html: (body || "").replace(/\n/g, "<br/>"),
+            text: (body || "").replace(/<[^>]*>/g, ""),
+        },
+        attachments: [],
+    };
+
+    console.log('[everlytic-send] API URL:', apiUrl);
+    console.log('[everlytic-send] Request body:', JSON.stringify(requestBody, null, 2));
+
+    try {
+        const response = await httpsRequest(
+            apiUrl,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Basic ${authString}`,
+                },
+            },
+            JSON.stringify(requestBody)
+        );
+
+        console.log('[everlytic-send] Response status:', response.statusCode);
+        console.log('[everlytic-send] Response body:', response.body);
+
+        if (response.statusCode >= 400) {
             return {
                 success: false,
-                error: `Everlytic API error: ${response.status} - ${errorText}`,
+                error: `Everlytic API error: ${response.statusCode} - ${response.body}`,
             };
         }
 
-        const result = await response.json();
+        const result = JSON.parse(response.body);
         return {
             success: true,
             details: result,
@@ -87,63 +138,64 @@ export interface WebhookRegistrationResult {
 }
 
 export async function registerWebhook(): Promise<WebhookRegistrationResult> {
-    try {
-        const username = process.env.EVERLYTIC_USERNAME;
-        const password = process.env.EVERLYTIC_PASSWORD;
+    const username = process.env.EVERLYTIC_USERNAME;
+    const password = process.env.EVERLYTIC_PASSWORD;
 
-        // Webhook specific credentials for basic auth, fallback to main creds if not set
-        const webhookUsername = process.env.EVERLYTIC_WEBHOOK_USERNAME || username;
-        const webhookPassword = process.env.EVERLYTIC_WEBHOOK_PASSWORD || password;
+    const webhookUsername = process.env.EVERLYTIC_WEBHOOK_USERNAME || username;
+    const webhookPassword = process.env.EVERLYTIC_WEBHOOK_PASSWORD || password;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-        // Default to localhost for development if not set, but warn
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
-        if (!username || !password || !webhookUsername || !webhookPassword) {
-            throw new Error("Missing required Everlytic credentials in environment variables");
-        }
-
-        const authString = Buffer.from(`${username}:${password}`).toString("base64");
-        const webhookUrl = `${appUrl}/api/everlytic/webhook`;
-
-        const payload = {
-            event_types: ["sent", "delivered", "failed", "open", "click", "bounce", "unsubscribe", "resubscribe"],
-            url: webhookUrl,
-            verb: "post",
-            auth_details: {
-                username: webhookUsername,
-                password: webhookPassword
-            },
-            auth_type: "basic",
-            content_type: "application/json",
-            field_set: "standard",
-            settings: {
-                include_html: false
-            }
+    if (!username || !password || !webhookUsername || !webhookPassword) {
+        return {
+            success: false,
+            error: "Missing required Everlytic credentials in environment variables",
         };
+    }
 
-        const response = await fetch("https://api.everlytic.net/transactional/email/v1/webhooks", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Basic ${authString}`,
+    const authString = Buffer.from(`${username}:${password}`).toString("base64");
+    const webhookUrl = `${appUrl}/api/everlytic/webhook`;
+
+    const payload = {
+        event_types: ["sent", "delivered", "failed", "open", "click", "bounce", "unsubscribe", "resubscribe"],
+        url: webhookUrl,
+        verb: "post",
+        auth_details: {
+            username: webhookUsername,
+            password: webhookPassword
+        },
+        auth_type: "basic",
+        content_type: "application/json",
+        field_set: "standard",
+        settings: {
+            include_html: false
+        }
+    };
+
+    try {
+        const response = await httpsRequest(
+            "https://api.everlytic.net/transactional/email/v1/webhooks",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Basic ${authString}`,
+                },
             },
-            body: JSON.stringify(payload),
-        });
+            JSON.stringify(payload)
+        );
 
-        if (!response.ok) {
-            const errorText = await response.text();
+        if (response.statusCode >= 400) {
             return {
                 success: false,
-                error: `Everlytic API error: ${response.status} - ${errorText}`,
+                error: `Everlytic API error: ${response.statusCode} - ${response.body}`,
             };
         }
 
-        const result = await response.json();
+        const result = JSON.parse(response.body);
         return {
             success: true,
             details: result,
         };
-
     } catch (error) {
         console.error("Error registering webhook:", error);
         return {
