@@ -205,6 +205,14 @@ export default function LeadsPage() {
 
                 <LeadSelectionTable leads={importedLeads} onToggle={toggleLeadSelection} onSelectAll={selectAllLeads} />
 
+                {/* Pro Tip Banner */}
+                <div className="flex items-start gap-3 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm">
+                  <Sparkles className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-blue-800">
+                    <span className="font-semibold">Pro tip:</span> Include <span className="font-medium">Company URL</span> and <span className="font-medium">LinkedIn Profile</span> columns in your CSV for significantly better research results. Our AI will search these sources directly to find the most relevant and personalized information for your outreach.
+                  </div>
+                </div>
+
                 <div className="flex justify-end pt-2">
                   <Button
                     onClick={handleGenerateDrafts}
