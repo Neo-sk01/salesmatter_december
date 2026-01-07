@@ -18,10 +18,15 @@ export async function GET(req: NextRequest) {
         }
 
         return NextResponse.json({ files: data });
-    } catch (error) {
-        console.error("Error fetching files:", error);
+    } catch (error: any) {
+        console.error("Error fetching files:", JSON.stringify(error, null, 2));
         return NextResponse.json(
-            { error: "Failed to fetch files" },
+            {
+                error: error.message || "Failed to fetch files",
+                details: error.details || null,
+                hint: error.hint || null,
+                code: error.code || null
+            },
             { status: 500 }
         );
     }

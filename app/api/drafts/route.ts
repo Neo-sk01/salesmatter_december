@@ -39,7 +39,12 @@ export async function GET() {
 
         return NextResponse.json({ drafts })
     } catch (error: any) {
-        console.error("Error fetching drafts:", error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        console.error("Error fetching drafts:", JSON.stringify(error, null, 2))
+        return NextResponse.json({
+            error: error.message || "Unknown error",
+            details: error.details || null,
+            hint: error.hint || null,
+            code: error.code || null
+        }, { status: 500 })
     }
 }
