@@ -204,3 +204,62 @@ export async function registerWebhook(): Promise<WebhookRegistrationResult> {
         };
     }
 }
+
+export interface ReprocessResult {
+    success: boolean;
+    error?: string;
+    details?: any;
+}
+
+/**
+ * Reprocess failed webhook events from the last 7 days
+ * Everlytic automatically retries in 5-min intervals for 3 days,
+ * but this endpoint can recover events that failed after that period
+ */
+export async function reprocessFailedWebhooks(): Promise<ReprocessResult> {
+    const username = process.env.EVERLYTIC_USERNAME;
+    const password = process.env.EVERLYTIC_PASSWORD;
+
+    if (!username || !password) {
+        return {
+            success: false,
+            error: "Missing Everlytic credentials in environment variables",
+        };
+    }
+
+    const authString = Buffer.from(`${username}:${password}`).toString("base64");
+
+    try {
+        const response = await httpsRequest(
+            "https://api.everlytic.net/transactional/email/v1/webhooks/failed/reprocess",
+            {
+                method: "GET",
+                headers: {
+                    Authorization: `Basic ${authString}`,
+                },
+            },
+            ""
+        );
+
+        console.log('[everlytic] Reprocess failed webhooks response:', response.statusCode, response.body);
+
+        if (response.statusCode >= 400) {
+            return {
+                success: false,
+                error: `Everlytic API error: ${response.statusCode} - ${response.body}`,
+            };
+        }
+
+        const result = JSON.parse(response.body);
+        return {
+            success: result.status === true,
+            details: result,
+        };
+    } catch (error) {
+        console.error("Error reprocessing failed webhooks:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+        };
+    }
+}

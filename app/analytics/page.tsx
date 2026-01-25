@@ -18,7 +18,9 @@ import {
 } from "recharts"
 import { Button } from "@/components/ui/button"
 import { registerWebhookAction } from "@/app/actions/register-webhook"
+import { reprocessWebhooksAction } from "@/app/actions/reprocess-webhooks"
 import { toast } from "sonner"
+import { RefreshCw } from "lucide-react"
 
 export default function AnalyticsPage() {
   const { metrics, dailyMetrics, drafts } = useOutreach()
@@ -32,6 +34,25 @@ export default function AnalyticsPage() {
         })
       } else {
         toast.error("Failed to register webhook", {
+          description: result.error || "Unknown error occurred"
+        })
+      }
+    } catch (error) {
+      toast.error("An error occurred", {
+        description: "Could not contact the server."
+      })
+    }
+  }
+
+  const handleReprocessWebhooks = async () => {
+    try {
+      const result = await reprocessWebhooksAction()
+      if (result.success) {
+        toast.success("Failed webhooks queued for reprocessing", {
+          description: "Events from the last 7 days will be retried."
+        })
+      } else {
+        toast.error("Failed to reprocess webhooks", {
           description: result.error || "Unknown error occurred"
         })
       }
@@ -97,9 +118,15 @@ export default function AnalyticsPage() {
               Track your email performance and optimize your outreach
             </p>
           </div>
-          <Button onClick={handleRegisterWebhook} variant="outline" size="sm">
-            Register Webhook
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleReprocessWebhooks} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Retry Failed
+            </Button>
+            <Button onClick={handleRegisterWebhook} variant="outline" size="sm">
+              Register Webhook
+            </Button>
+          </div>
         </div>
 
         {/* Metric Cards */}
