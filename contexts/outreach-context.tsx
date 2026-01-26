@@ -175,6 +175,8 @@ interface OutreachContextType {
     setDailyMetrics: (metrics: DailyMetric[]) => void
     showOnboarding: boolean
     setShowOnboarding: (show: boolean) => void
+    exportDraftsForReview: (recipientEmail: string, draftIds?: string[]) => Promise<{ success: boolean; message?: string; error?: string }>
+    isExporting: boolean
 }
 
 const OutreachContext = createContext<OutreachContextType | undefined>(undefined)
@@ -453,6 +455,47 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const [regeneratingDraftId, setRegeneratingDraftId] = useState<string | null>(null)
+    const [isExporting, setIsExporting] = useState(false)
+
+    const exportDraftsForReview = useCallback(async (
+        recipientEmail: string,
+        draftIds?: string[]
+    ): Promise<{ success: boolean; message?: string; error?: string }> => {
+        // Get drafts to export (either specified IDs or all pending drafts)
+        const draftsToExport = draftIds
+            ? drafts.filter(d => draftIds.includes(d.id))
+            : drafts.filter(d => d.status !== 'sent')
+
+        if (draftsToExport.length === 0) {
+            return { success: false, error: 'No drafts to export' }
+        }
+
+        setIsExporting(true)
+
+        try {
+            const response = await fetch('/api/export-drafts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    drafts: draftsToExport,
+                    recipientEmail,
+                }),
+            })
+
+            const result = await response.json()
+
+            if (!result.success) {
+                return { success: false, error: result.error }
+            }
+
+            return { success: true, message: result.message }
+        } catch (error: any) {
+            console.error('Failed to export drafts:', error)
+            return { success: false, error: error.message || 'Failed to export drafts' }
+        } finally {
+            setIsExporting(false)
+        }
+    }, [drafts])
 
     const regenerateDraft = useCallback(async (draftId: string) => {
         const draft = drafts.find((d) => d.id === draftId)
@@ -534,6 +577,8 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         setDailyMetrics,
         showOnboarding,
         setShowOnboarding,
+        exportDraftsForReview,
+        isExporting,
     }
 
     return <OutreachContext.Provider value={value}>{children}</OutreachContext.Provider>
