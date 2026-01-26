@@ -22,7 +22,8 @@ export interface EmailSendResult {
 function httpsRequest(
     url: string,
     options: https.RequestOptions,
-    data: string
+    data: string,
+    timeoutMs: number = 30000
 ): Promise<{ statusCode: number; body: string }> {
     return new Promise((resolve, reject) => {
         const urlObj = new URL(url);
@@ -35,7 +36,7 @@ function httpsRequest(
                 method: options.method || "POST",
                 headers: options.headers,
                 family: 4, // Force IPv4
-                timeout: 30000,
+                timeout: timeoutMs,
             },
             (res) => {
                 let body = "";
@@ -238,7 +239,8 @@ export async function reprocessFailedWebhooks(): Promise<ReprocessResult> {
                     Authorization: `Basic ${authString}`,
                 },
             },
-            ""
+            "",
+            60000 // 60 second timeout for reprocessing
         );
 
         console.log('[everlytic] Reprocess failed webhooks response:', response.statusCode, response.body);

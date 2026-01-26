@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { TavilySearch } from "@langchain/tavily";
 import { ImportedLead } from "@/types";
 
 export interface ResearchResult {
@@ -11,6 +12,11 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
         apiKey: process.env.OPENAI_API_KEY,
     });
 
+    const tavilyApiKey = process.env.TAVILY_API_KEY;
+    if (!tavilyApiKey) {
+        throw new Error("TAVILY_API_KEY not found in environment");
+    }
+
     // Build context strings for the prompt
     const linkedinContext = lead.linkedinUrl
         ? `- LinkedIn Profile: ${lead.linkedinUrl}`
@@ -20,105 +26,144 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
         ? `- Company Website: ${lead.companyUrl}`
         : "";
 
-    // Build search query components
-    const searchComponents: string[] = [
-        lead.company,
-        `${lead.firstName} ${lead.lastName}`,
-        lead.role,
-    ];
-
-    // Build explicit search instructions
-    const searchInstructions: string[] = [
-        `Search for "${lead.company}" company news and information`,
+    // Build search queries for Tavily
+    const searchQueries: string[] = [
+        `${lead.company} company news announcements`,
+        `${lead.firstName} ${lead.lastName} ${lead.company} ${lead.role}`,
     ];
 
     if (lead.companyUrl) {
-        searchInstructions.push(`Visit and analyze the company website: ${lead.companyUrl}`);
+        searchQueries.push(`site:${lead.companyUrl} about products services`);
     }
 
     if (lead.linkedinUrl) {
-        searchInstructions.push(`Search for LinkedIn profile information: ${lead.linkedinUrl}`);
+        searchQueries.push(`${lead.firstName} ${lead.lastName} LinkedIn professional`);
     }
 
-    searchInstructions.push(
-        `Search for "${lead.firstName} ${lead.lastName}" at "${lead.company}" - recent news, updates, or professional activity`
-    );
-
-    const prompt = `
-    You are a researcher preparing context for cold outreach. Use web search to gather accurate, current information.
-
-    Prospect Details:
-    - Name: ${lead.firstName} ${lead.lastName}
-    - Company: ${lead.company}
-    - Role: ${lead.role}
-    ${linkedinContext}
-    ${companyUrlContext}
-
-    SEARCH INSTRUCTIONS (please perform these searches):
-    ${searchInstructions.map((s, i) => `${i + 1}. ${s}`).join('\n    ')}
-
-    After searching, write a focused 150-word summary that includes:
-    - Recent company news, announcements, or achievements
-    - Company initiatives, products, or services (especially from their website if provided)
-    - Information about ${lead.firstName} ${lead.lastName} - their role, professional updates, or thought leadership
-    - LinkedIn profile insights (if URL was provided)
-    - Any conversation hooks that would be relevant for cold outreach
-
-    Be factual and specific. Cite specific details from your search results.
-    If a company URL was provided, prioritize information from their official website.
-  `;
-
-    console.log("Using GPT-4o-mini web search with enhanced query:");
-    console.log("  - Company:", lead.company);
-    if (lead.companyUrl) console.log("  - Company URL:", lead.companyUrl);
-    if (lead.linkedinUrl) console.log("  - LinkedIn:", lead.linkedinUrl);
+    console.log("Using Tavily search with queries:");
+    searchQueries.forEach((q, i) => console.log(`  ${i + 1}. ${q}`));
 
     try {
-        // Use OpenAI's Responses API with web search tool
-        const response = await openai.responses.create({
-            model: "gpt-4o-mini",
-            tools: [{ type: "web_search_preview" }],
-            input: prompt,
+        // Initialize Tavily search tool
+        const searchTool = new TavilySearch({
+            tavilyApiKey: tavilyApiKey,
+            maxResults: 5,
         });
 
-        // Extract the summary from the response
-        let summary = "";
+        // Perform searches and collect results
+        const allResults: { title: string; url: string; content: string }[] = [];
         const sources: { title: string; url: string }[] = [];
 
-        // Process the response output items
-        for (const item of response.output) {
-            if (item.type === "message") {
-                // Extract text content from message
-                for (const content of item.content) {
-                    if (content.type === "output_text") {
-                        summary = content.text;
+        for (const query of searchQueries) {
+            try {
+                const result = await searchTool.invoke({ query });
 
-                        // Extract annotations (citations) if available
-                        if ('annotations' in content && Array.isArray(content.annotations)) {
-                            for (const annotation of content.annotations) {
-                                if ('type' in annotation && annotation.type === "url_citation") {
-                                    const urlAnnotation = annotation as { type: string; title?: string; url: string };
-                                    sources.push({
-                                        title: urlAnnotation.title || urlAnnotation.url,
-                                        url: urlAnnotation.url,
-                                    });
-                                }
-                            }
+                // Parse the result (Tavily returns a JSON string)
+                let parsedResult;
+                if (typeof result === "string") {
+                    try {
+                        parsedResult = JSON.parse(result);
+                    } catch {
+                        // If parsing fails, use the raw string
+                        allResults.push({ title: query, url: "", content: result });
+                        continue;
+                    }
+                } else {
+                    parsedResult = result;
+                }
+
+                // Extract results from Tavily response
+                if (Array.isArray(parsedResult)) {
+                    for (const item of parsedResult) {
+                        allResults.push({
+                            title: item.title || "",
+                            url: item.url || "",
+                            content: item.content || item.snippet || "",
+                        });
+                        if (item.url) {
+                            sources.push({
+                                title: item.title || item.url,
+                                url: item.url,
+                            });
+                        }
+                    }
+                } else if (parsedResult.results && Array.isArray(parsedResult.results)) {
+                    for (const item of parsedResult.results) {
+                        allResults.push({
+                            title: item.title || "",
+                            url: item.url || "",
+                            content: item.content || item.snippet || "",
+                        });
+                        if (item.url) {
+                            sources.push({
+                                title: item.title || item.url,
+                                url: item.url,
+                            });
                         }
                     }
                 }
+            } catch (searchError) {
+                console.warn(`Search query failed: ${query}`, searchError);
             }
         }
 
-        console.log("GPT-4o-mini web search completed successfully");
-        console.log(`Found ${sources.length} sources`);
+        console.log(`Tavily search completed. Found ${allResults.length} results from ${sources.length} sources`);
+
+        // Deduplicate sources by URL
+        const uniqueSources = sources.filter(
+            (source, index, self) => index === self.findIndex((s) => s.url === source.url)
+        );
+
+        // Compile search results into context for GPT
+        const searchContext = allResults
+            .map((r) => `[${r.title}]\n${r.content}`)
+            .join("\n\n---\n\n");
+
+        // Use GPT-4o-mini to summarize the search results
+        const summaryPrompt = `
+You are a researcher preparing context for cold outreach. Based on the web search results provided, write a focused summary.
+
+Prospect Details:
+- Name: ${lead.firstName} ${lead.lastName}
+- Company: ${lead.company}
+- Role: ${lead.role}
+${linkedinContext}
+${companyUrlContext}
+
+WEB SEARCH RESULTS:
+${searchContext || "No search results found."}
+
+Write a focused 150-word summary that includes:
+- Recent company news, announcements, or achievements
+- Company initiatives, products, or services
+- Information about ${lead.firstName} ${lead.lastName} - their role, professional updates, or thought leadership
+- Any conversation hooks that would be relevant for cold outreach
+
+Be factual and specific. Only include information that appears in the search results above.
+If no relevant information was found, state that clearly and provide general context based on the role/industry.
+`;
+
+        const summaryResponse = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            temperature: 0.3,
+            messages: [
+                {
+                    role: "user",
+                    content: summaryPrompt,
+                },
+            ],
+        });
+
+        const summary = summaryResponse.choices[0]?.message?.content || "No summary generated";
+
+        console.log("Tavily research completed successfully");
 
         return {
-            summary: summary || "No summary generated",
-            sources: sources,
+            summary,
+            sources: uniqueSources,
         };
     } catch (error) {
-        console.error("GPT-4o-mini web search failed:", error);
+        console.error("Tavily search failed:", error);
 
         // Fallback to basic completion without web search
         console.log("Falling back to basic GPT-4o-mini without web search");
