@@ -159,16 +159,14 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, 
       {/* Expanded Content */}
       {isExpanded && (
         <div className="px-4 pb-4 pt-0">
-          <div className="space-y-4 border-t border-border pt-4">
+          <div className="space-y-3 border-t border-border/50 pt-3 mt-1">
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Subject</p>
-              <p className="text-sm font-medium text-foreground">{draft.subject}</p>
+              <p className="text-xs text-muted-foreground mb-0.5">Subject</p>
+              <p className="text-sm text-foreground">{draft.subject}</p>
             </div>
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Body</p>
-              <div className="rounded-md bg-muted/30 p-3">
-                <p className="text-sm whitespace-pre-wrap text-foreground/80 leading-relaxed">{draft.body}</p>
-              </div>
+              <p className="text-xs text-muted-foreground mb-0.5">Body</p>
+              <p className="text-sm whitespace-pre-wrap text-foreground/85 leading-relaxed">{draft.body}</p>
             </div>
           </div>
         </div>

@@ -9,7 +9,6 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Search, User, Building2, Briefcase, Mail, Sparkles } from "lucide-react"
 import type { EmailDraft } from "@/types"
 
@@ -68,68 +67,48 @@ export function ResearchModal({ draft, children }: ResearchModalProps) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-6 overflow-y-auto pr-2 -mr-2">
-                    {/* Lead Info Card */}
-                    <div className="rounded-lg border bg-muted/30 p-4">
-                        <h3 className="font-medium mb-3 text-sm text-muted-foreground uppercase tracking-wide">
+                <div className="space-y-5 overflow-y-auto pr-2 -mr-2">
+                    {/* Lead Info */}
+                    <div className="space-y-2">
+                        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                             Lead Details
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                             <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm font-medium">
-                                        {lead.firstName} {lead.lastName}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">Name</p>
-                                </div>
+                                <User className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                <span className="text-sm">{lead.firstName} {lead.lastName}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Mail className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm font-medium">{lead.email}</p>
-                                    <p className="text-xs text-muted-foreground">Email</p>
-                                </div>
+                                <Mail className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                <span className="text-sm truncate">{lead.email}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Building2 className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm font-medium">{lead.company || "N/A"}</p>
-                                    <p className="text-xs text-muted-foreground">Company</p>
-                                </div>
+                                <Building2 className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                <span className="text-sm">{lead.company || "—"}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Briefcase className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm font-medium">{lead.role || "N/A"}</p>
-                                    <p className="text-xs text-muted-foreground">Role</p>
-                                </div>
+                                <Briefcase className="h-3.5 w-3.5 text-muted-foreground/70" />
+                                <span className="text-sm">{lead.role || "—"}</span>
                             </div>
                         </div>
                     </div>
 
+                    <hr className="border-border/50" />
+
                     {/* Research Summary */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                                Research Summary
-                            </h3>
-                            <Badge variant="secondary" className="text-xs">
-                                ~150 words
-                            </Badge>
-                        </div>
-                        <div className="min-h-[150px] rounded-lg border bg-card p-4">
+                    <div className="space-y-2">
+                        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                            Research Summary
+                        </h3>
+                        <div className="min-h-[120px]">
                             {summaryText ? (
-                                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/90">
                                     {summaryText}
                                 </p>
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-8">
-                                    <Search className="h-8 w-8 mb-2 opacity-50" />
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-6">
+                                    <Search className="h-6 w-6 mb-2 opacity-40" />
                                     <p className="text-sm">No research summary available</p>
-                                    <p className="text-xs">
-                                        Research is generated when drafts are created
-                                    </p>
                                 </div>
                             )}
                         </div>
@@ -137,28 +116,27 @@ export function ResearchModal({ draft, children }: ResearchModalProps) {
 
                     {/* Sources Section */}
                     {sources.length > 0 && (
-                        <div className="space-y-3">
-                            <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                                Sources ({sources.length})
-                            </h3>
-                            <div className="rounded-lg border bg-muted/20 divide-y">
-                                {sources.map((source, i) => (
-                                    <div key={i} className="p-3 text-sm">
+                        <>
+                            <hr className="border-border/50" />
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                    Sources ({sources.length})
+                                </h3>
+                                <div className="space-y-1.5">
+                                    {sources.map((source, i) => (
                                         <a
+                                            key={i}
                                             href={source.url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="font-medium hover:underline text-primary block break-words"
+                                            className="block text-sm text-primary hover:underline truncate"
                                         >
                                             {i + 1}. {source.title}
                                         </a>
-                                        <p className="text-xs text-muted-foreground break-all mt-1">
-                                            {source.url}
-                                        </p>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
             </DialogContent>
