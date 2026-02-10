@@ -1,8 +1,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/services/everlytic";
-
+import { insertEmailEvent } from "@/lib/db/email-events-db";
 import { createClient } from "@supabase/supabase-js";
+import type { CanonicalEmailEvent } from "@/types/email-analytics";
 
 function getSupabase() {
     return createClient(
@@ -47,6 +48,35 @@ export async function POST(req: NextRequest) {
                             status: result.success ? "sent" : "failed",
                             sent_at: result.success ? new Date().toISOString() : null
                         }).eq("id", draft.id);
+                    }
+
+                    // If email was sent successfully, insert a "sent" event for analytics
+                    if (result.success) {
+                        const messageId = result.details?.message_id ||
+                            result.details?.data?.message_id ||
+                            `local-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+                        const sentEvent: CanonicalEmailEvent = {
+                            provider: "everlytic",
+                            eventType: "sent",
+                            email: draft.email,
+                            messageId: messageId,
+                            campaignId: draft.id || null,
+                            templateId: null,
+                            occurredAt: new Date(),
+                            rawPayload: {
+                                source: "api_send",
+                                subject: draft.subject,
+                                details: result.details
+                            }
+                        };
+
+                        const idempotencyKey = `sent-${messageId}-${draft.email}`;
+
+                        const insertResult = await insertEmailEvent(sentEvent, idempotencyKey);
+                        if (insertResult.inserted) {
+                            console.log(`[send-api] Inserted sent event for ${draft.email}`);
+                        }
                     }
 
                     return {

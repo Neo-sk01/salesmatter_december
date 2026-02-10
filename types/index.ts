@@ -54,7 +54,7 @@ export type EmailDraft = {
 export type OutreachBatch = {
   id: string
   name: string
-  status: "importing" | "drafting" | "ready" | "sending" | "completed"
+  status: "importing" | "drafting" | "ready" | "sending" | "completed" | "failed"
   totalLeads: number
   draftedCount: number
   sentCount: number

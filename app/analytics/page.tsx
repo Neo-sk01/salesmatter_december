@@ -16,52 +16,10 @@ import {
   Bar,
   Legend,
 } from "recharts"
-import { Button } from "@/components/ui/button"
-import { registerWebhookAction } from "@/app/actions/register-webhook"
-import { reprocessWebhooksAction } from "@/app/actions/reprocess-webhooks"
-import { toast } from "sonner"
-import { RefreshCw } from "lucide-react"
+import { WebhookStatusPill, WebhookStatusBanner } from "@/components/webhook-status-card"
 
 export default function AnalyticsPage() {
   const { metrics, dailyMetrics, drafts } = useOutreach()
-
-  const handleRegisterWebhook = async () => {
-    try {
-      const result = await registerWebhookAction()
-      if (result.success) {
-        toast.success("Webhook registered successfully", {
-          description: "Everlytic will now send events to your webhook URL."
-        })
-      } else {
-        toast.error("Failed to register webhook", {
-          description: result.error || "Unknown error occurred"
-        })
-      }
-    } catch (error) {
-      toast.error("An error occurred", {
-        description: "Could not contact the server."
-      })
-    }
-  }
-
-  const handleReprocessWebhooks = async () => {
-    try {
-      const result = await reprocessWebhooksAction()
-      if (result.success) {
-        toast.success("Failed webhooks queued for reprocessing", {
-          description: "Events from the last 7 days will be retried."
-        })
-      } else {
-        toast.error("Failed to reprocess webhooks", {
-          description: result.error || "Unknown error occurred"
-        })
-      }
-    } catch (error) {
-      toast.error("An error occurred", {
-        description: "Could not contact the server."
-      })
-    }
-  }
 
   const sentDrafts = drafts.filter((d) => d.status === "sent")
 
@@ -110,7 +68,8 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardShell>
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-4">
+        {/* Header with compact status pill */}
         <div className="flex flex-row items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
@@ -118,16 +77,11 @@ export default function AnalyticsPage() {
               Track your email performance and optimize your outreach
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={handleReprocessWebhooks} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Retry Failed
-            </Button>
-            <Button onClick={handleRegisterWebhook} variant="outline" size="sm">
-              Register Webhook
-            </Button>
-          </div>
+          <WebhookStatusPill />
         </div>
+
+        {/* Thin Status Banner */}
+        <WebhookStatusBanner />
 
         {/* Metric Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

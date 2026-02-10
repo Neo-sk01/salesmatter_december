@@ -150,6 +150,12 @@ const INITIAL_METRICS: EmailMetrics = {
     bounceRate: 0,
 }
 
+interface ErrorState {
+    message: string
+    code?: string
+    retryable: boolean
+}
+
 interface OutreachContextType {
     importedLeads: ImportedLead[]
     drafts: EmailDraft[]
@@ -177,6 +183,18 @@ interface OutreachContextType {
     setShowOnboarding: (show: boolean) => void
     exportDraftsForReview: (recipientEmail: string, draftIds?: string[]) => Promise<{ success: boolean; message?: string; error?: string }>
     isExporting: boolean
+    // Loading states
+    isLoadingDrafts: boolean
+    isLoadingAnalytics: boolean
+    // Error states
+    draftsError: ErrorState | null
+    analyticsError: ErrorState | null
+    generationError: ErrorState | null
+    // Actions
+    retryLoadDrafts: () => Promise<void>
+    retryLoadAnalytics: () => Promise<void>
+    clearErrors: () => void
+    clearGenerationError: () => void
 }
 
 const OutreachContext = createContext<OutreachContextType | undefined>(undefined)
@@ -199,56 +217,142 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
     const [metrics, setMetrics] = useState<EmailMetrics>(INITIAL_METRICS)
     const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([])
 
-    // Load drafts and analytics from DB on mount
+    // Loading and error states
+    const [isLoadingDrafts, setIsLoadingDrafts] = useState(true)
+    const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(true)
+    const [draftsError, setDraftsError] = useState<ErrorState | null>(null)
+    const [analyticsError, setAnalyticsError] = useState<ErrorState | null>(null)
+    const [generationError, setGenerationError] = useState<ErrorState | null>(null)
+
+    // Clear generation error
+    const clearGenerationError = useCallback(() => {
+        setGenerationError(null)
+    }, [])
+
+    // Helper to parse API errors into user-friendly messages
+    const parseError = (error: any, fallback: string): ErrorState => {
+        // Network errors (DNS, connection issues)
+        if (error?.message?.includes('fetch failed') || error?.message?.includes('ENOTFOUND')) {
+            return {
+                message: 'Unable to connect to the database. Please check your internet connection.',
+                code: 'NETWORK_ERROR',
+                retryable: true
+            }
+        }
+        // Timeout errors
+        if (error?.message?.includes('timeout') || error?.code === 'ETIMEDOUT') {
+            return {
+                message: 'Request timed out. The server may be busy.',
+                code: 'TIMEOUT',
+                retryable: true
+            }
+        }
+        // Server errors
+        if (error?.status >= 500 || error?.code === 'INTERNAL_ERROR') {
+            return {
+                message: 'Server error. Please try again later.',
+                code: 'SERVER_ERROR',
+                retryable: true
+            }
+        }
+        // Auth errors
+        if (error?.status === 401 || error?.status === 403) {
+            return {
+                message: 'Authentication failed. Please refresh the page.',
+                code: 'AUTH_ERROR',
+                retryable: false
+            }
+        }
+        // Default
+        return {
+            message: error?.message || fallback,
+            code: error?.code || 'UNKNOWN',
+            retryable: true
+        }
+    }
+
+    // Fetch drafts with proper error handling
+    const fetchDrafts = useCallback(async () => {
+        setIsLoadingDrafts(true)
+        setDraftsError(null)
+
+        try {
+            const res = await fetch("/api/drafts")
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}))
+                throw {
+                    message: errorData.error || 'Failed to load drafts',
+                    code: errorData.code,
+                    details: errorData.details,
+                    status: res.status
+                }
+            }
+
+            const data = await res.json()
+
+            // Map DB drafts to frontend EmailDraft type
+            const formattedDrafts: EmailDraft[] = (data.drafts || []).map((d: any) => ({
+                id: d.id,
+                leadId: d.lead_id,
+                lead: {
+                    id: d.leads?.id,
+                    firstName: d.leads?.first_name,
+                    lastName: d.leads?.last_name,
+                    email: d.leads?.email,
+                    company: d.leads?.company,
+                    role: d.leads?.role,
+                    status: d.leads?.status as any,
+                    segment: "Mid-Market",
+                    lastActivity: "Imported"
+                },
+                subject: d.subject,
+                body: d.body,
+                status: d.status,
+                createdAt: d.created_at,
+                sentAt: d.sent_at,
+                researchSummary: d.research_summary
+            }))
+
+            setDrafts(formattedDrafts)
+            setDraftsError(null)
+        } catch (error: any) {
+            console.error("Error loading drafts:", error)
+            setDraftsError(parseError(error, 'Failed to load drafts'))
+        } finally {
+            setIsLoadingDrafts(false)
+        }
+    }, [])
+
+    // Fetch analytics with proper error handling
+    const fetchAnalytics = useCallback(async () => {
+        setIsLoadingAnalytics(true)
+        setAnalyticsError(null)
+
+        try {
+            const data = await getAnalyticsData()
+            setMetrics(data.metrics)
+            setDailyMetrics(data.dailyMetrics)
+            setAnalyticsError(null)
+        } catch (error: any) {
+            console.error("Error loading analytics:", error)
+            setAnalyticsError(parseError(error, 'Failed to load analytics'))
+        } finally {
+            setIsLoadingAnalytics(false)
+        }
+    }, [])
+
+    // Clear all errors
+    const clearErrors = useCallback(() => {
+        setDraftsError(null)
+        setAnalyticsError(null)
+    }, [])
+
+    // Load drafts and analytics on mount
     useEffect(() => {
-        const fetchDrafts = async () => {
-            try {
-                const res = await fetch("/api/drafts")
-                if (!res.ok) throw new Error("Failed to fetch drafts")
-                const data = await res.json()
-
-                // Map DB drafts to frontend EmailDraft type
-                const formattedDrafts: EmailDraft[] = data.drafts.map((d: any) => ({
-                    id: d.id,
-                    leadId: d.lead_id,
-                    lead: {
-                        id: d.leads.id,
-                        firstName: d.leads.first_name,
-                        lastName: d.leads.last_name,
-                        email: d.leads.email,
-                        company: d.leads.company,
-                        role: d.leads.role,
-                        status: d.leads.status as any,
-                        segment: "Mid-Market", // default
-                        lastActivity: "Imported"
-                    },
-                    subject: d.subject,
-                    body: d.body,
-                    status: d.status,
-                    createdAt: d.created_at,
-                    sentAt: d.sent_at,
-                    researchSummary: d.research_summary
-                }))
-
-                setDrafts(formattedDrafts)
-            } catch (error) {
-                console.error("Error loading drafts:", error)
-            }
-        }
-
-        const fetchAnalytics = async () => {
-            try {
-                const data = await getAnalyticsData()
-                setMetrics(data.metrics)
-                setDailyMetrics(data.dailyMetrics)
-            } catch (error) {
-                console.error("Error loading analytics:", error)
-            }
-        }
-
         fetchDrafts()
         fetchAnalytics()
-    }, [])
+    }, [fetchDrafts, fetchAnalytics])
 
     // Persist to localStorage whenever it changes
     useEffect(() => {
@@ -285,6 +389,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         if (selectedLeads.length === 0) return
 
         setIsDrafting(true)
+        setGenerationError(null) // Clear any previous generation error
         setCurrentBatch((prev) => (prev ? { ...prev, status: "drafting" } : null))
 
         try {
@@ -295,11 +400,24 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             })
 
             const result = await response.json()
-            if (result.error) throw new Error(result.error)
+
+            // Check for API-level errors (like quota exceeded)
+            if (result.error) {
+                setGenerationError({
+                    message: result.error,
+                    code: result.errorCode || 'API_ERROR',
+                    retryable: result.retryable ?? true
+                })
+                setCurrentBatch((prev) => (prev ? { ...prev, status: "failed" } : null))
+                return
+            }
 
             const { drafts: newRawDrafts } = result
 
-            const newDrafts: EmailDraft[] = newRawDrafts.map((d: any, index: number) => {
+            // Filter out failed drafts and only add successful ones
+            const successfulDrafts = newRawDrafts.filter((d: any) => d.status !== "failed")
+
+            const newDrafts: EmailDraft[] = successfulDrafts.map((d: any) => {
                 const lead = selectedLeads.find((l) => l.id === d.leadId)!
                 return {
                     id: d.id, // Use DB ID
@@ -317,11 +435,31 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
                 }
             })
 
+            // Check if any individual drafts failed
+            const failedDrafts = newRawDrafts.filter((d: any) => d.status === "failed")
+            if (failedDrafts.length > 0 && successfulDrafts.length === 0) {
+                // All failed - show the error
+                const firstError = failedDrafts[0]
+                setGenerationError({
+                    message: firstError.error || 'Failed to generate drafts',
+                    code: firstError.errorCode || 'GENERATION_FAILED',
+                    retryable: firstError.retryable ?? true
+                })
+                setCurrentBatch((prev) => (prev ? { ...prev, status: "failed" } : null))
+                return
+            }
+
             setDrafts((prev) => [...newDrafts, ...prev])
             setCurrentBatch((prev) => (prev ? { ...prev, status: "ready", draftedCount: newDrafts.length } : null))
             setImportedLeads([])
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to generate drafts:", error)
+            setGenerationError({
+                message: error?.message || 'Failed to generate drafts. Please try again.',
+                code: 'NETWORK_ERROR',
+                retryable: true
+            })
+            setCurrentBatch((prev) => (prev ? { ...prev, status: "failed" } : null))
         } finally {
             setIsDrafting(false)
         }
@@ -579,6 +717,18 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         setShowOnboarding,
         exportDraftsForReview,
         isExporting,
+        // Loading states
+        isLoadingDrafts,
+        isLoadingAnalytics,
+        // Error states
+        draftsError,
+        analyticsError,
+        generationError,
+        // Actions
+        retryLoadDrafts: fetchDrafts,
+        retryLoadAnalytics: fetchAnalytics,
+        clearErrors,
+        clearGenerationError,
     }
 
     return <OutreachContext.Provider value={value}>{children}</OutreachContext.Provider>

@@ -22,14 +22,18 @@ export function ComposeEmailDialog({ open, onOpenChange, onSend }: ComposeEmailD
         if (!to || !subject || !body) return
 
         setIsSending(true)
-        await onSend(to, subject, body)
-        setIsSending(false)
-
-        // Reset form and close
-        setTo("")
-        setSubject("")
-        setBody("")
-        onOpenChange(false)
+        try {
+            await onSend(to, subject, body)
+            // Only reset form and close on success
+            setTo("")
+            setSubject("")
+            setBody("")
+            onOpenChange(false)
+        } catch {
+            // Error is handled by parent with toast, keep dialog open
+        } finally {
+            setIsSending(false)
+        }
     }
 
     return (

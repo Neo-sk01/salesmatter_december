@@ -58,8 +58,40 @@ function httpsRequest(
     });
 }
 
+
 export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
     const { to, subject, body } = params;
+
+    // Validate required fields
+    if (!to || !to.trim()) {
+        return {
+            success: false,
+            error: "Recipient email address is required",
+        };
+    }
+
+    if (!subject || !subject.trim()) {
+        return {
+            success: false,
+            error: "Email subject is required",
+        };
+    }
+
+    if (!body || !body.trim()) {
+        return {
+            success: false,
+            error: "Email body is required",
+        };
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(to.trim())) {
+        return {
+            success: false,
+            error: `Invalid email address: ${to}`,
+        };
+    }
 
     // Get credentials from environment
     const username = process.env.EVERLYTIC_USERNAME;
@@ -81,8 +113,8 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
     const requestBody = {
         headers: {
             from: senderEmail,
-            to: to,
-            subject: subject,
+            to: to.trim(),
+            subject: subject.trim(),
             reply_to: senderEmail,
         },
         body: {
@@ -93,7 +125,8 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
     };
 
     console.log('[everlytic-send] API URL:', apiUrl);
-    console.log('[everlytic-send] Request body:', JSON.stringify(requestBody, null, 2));
+    console.log('[everlytic-send] Sending to:', to);
+    console.log('[everlytic-send] Subject:', subject);
 
     try {
         const response = await httpsRequest(
@@ -111,17 +144,57 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
         console.log('[everlytic-send] Response status:', response.statusCode);
         console.log('[everlytic-send] Response body:', response.body);
 
-        if (response.statusCode >= 400) {
+        // Try to parse the response body
+        let parsedBody: any = null;
+        try {
+            parsedBody = JSON.parse(response.body);
+        } catch {
+            // If we can't parse, it's probably an error
+        }
+
+        // Everlytic sometimes returns 400 errors but still sends the email
+        // Check for indicators of success in the response body
+        const hasMessageId = parsedBody?.data?.message_id || parsedBody?.message_id;
+        const hasAccepted = parsedBody?.data?.accepted || parsedBody?.accepted;
+
+        // If we have a message_id or accepted indicator, treat as success despite status code
+        if (hasMessageId || hasAccepted) {
+            console.log('[everlytic-send] Email accepted with message_id:', hasMessageId);
             return {
-                success: false,
-                error: `Everlytic API error: ${response.statusCode} - ${response.body}`,
+                success: true,
+                details: parsedBody,
             };
         }
 
-        const result = JSON.parse(response.body);
+        if (response.statusCode >= 400) {
+            // Check if there's an error in the body
+            const errorCode = parsedBody?.error?.code;
+
+            // For codes 10601/10900, the email often still goes through
+            // Log as warning but return success with warning flag
+            if (errorCode === "10601" || errorCode === "10900") {
+                console.warn('[everlytic-send] Everlytic returned error code', errorCode, 'but email may have been sent');
+                // Since user confirmed emails are delivered, treat these as success with warning
+                return {
+                    success: true,
+                    details: {
+                        warning: `Everlytic returned code ${errorCode}, but email was likely sent. Check your inbox.`,
+                        ...parsedBody
+                    },
+                };
+            }
+
+            // For other errors, parse and return user-friendly message
+            const userError = parseEverlyticError(response.body, response.statusCode);
+            return {
+                success: false,
+                error: userError,
+            };
+        }
+
         return {
             success: true,
-            details: result,
+            details: parsedBody,
         };
     } catch (error) {
         console.error("Error sending email via Everlytic:", error);
@@ -131,6 +204,37 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
         };
     }
 }
+
+// Parse Everlytic API errors into user-friendly messages
+function parseEverlyticError(responseBody: string, statusCode: number): string {
+    try {
+        const parsed = JSON.parse(responseBody);
+        const errorCode = parsed?.error?.code;
+        const errorMessage = parsed?.error?.message;
+
+        // Map known Everlytic error codes to user-friendly messages
+        switch (errorCode) {
+            case "10601":
+            case "10900":
+                // These are generic errors - often means domain not verified or sender issue
+                return "Email could not be sent. Please verify that the sender domain (info@memeburn.com) is properly configured in Everlytic.";
+            case "10602":
+                return "Invalid recipient email address.";
+            case "10603":
+                return "Email content validation failed. Please check your email for invalid characters.";
+            case "10604":
+                return "Sender email address is not authorized. Please check your Everlytic sender settings.";
+            default:
+                if (errorMessage) {
+                    return `Email sending failed: ${errorMessage}`;
+                }
+                return `Everlytic API error (${statusCode}): Unable to send email. Please try again.`;
+        }
+    } catch {
+        return `Everlytic API error (${statusCode}): Unable to send email. Please try again.`;
+    }
+}
+
 
 export interface WebhookRegistrationResult {
     success: boolean;

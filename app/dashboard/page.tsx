@@ -7,6 +7,7 @@ import { LeadSelectionTable } from "@/components/outreach/lead-selection-table"
 import { PromptTemplateModal } from "@/components/outreach/prompt-template-modal"
 import { OnboardingGuide } from "@/components/onboarding-guide"
 import { Button } from "@/components/ui/button"
+import { ErrorBanner } from "@/components/ui/error-banner"
 import { useOutreach } from "@/hooks/use-outreach"
 import { ArrowRight, Sparkles, Loader2, Code2, Users, CheckCircle2 } from "lucide-react"
 import type { ImportedLead } from "@/types"
@@ -31,6 +32,8 @@ export default function LeadsPage() {
     resetFlow,
     showOnboarding,
     setShowOnboarding,
+    generationError,
+    clearGenerationError,
   } = useOutreach()
 
   const [isParsing, setIsParsing] = useState(false)
@@ -162,6 +165,19 @@ export default function LeadsPage() {
             >
               View Drafts <ArrowRight className="h-3 w-3" />
             </Link>
+          </div>
+        )}
+
+        {/* Generation Error Banner */}
+        {generationError && (
+          <div className="mx-6 mt-4">
+            <ErrorBanner
+              message={generationError.message}
+              code={generationError.code}
+              retryable={generationError.retryable}
+              onRetry={generationError.retryable ? generateDrafts : undefined}
+              onDismiss={clearGenerationError}
+            />
           </div>
         )}
 

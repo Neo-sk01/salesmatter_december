@@ -8,6 +8,7 @@ import { useOutreach } from "@/hooks/use-outreach"
 import { ComposeEmailDialog } from "@/components/outreach/compose-email-dialog"
 import { Send, CheckCircle2, Zap, FileEdit, Plus } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 export default function SendPage() {
   const { drafts, updateDraft, sendEmail, sendBulk, deleteDraft, sendNewEmail, exportDraftsForReview, isExporting } = useOutreach()
@@ -30,10 +31,14 @@ export default function SendPage() {
     try {
       await sendNewEmail(to, subject, body)
       setLastSent(to)
+      toast.success("Email sent!", { description: `Email sent to ${to}` })
       setTimeout(() => setLastSent(null), 3000)
-    } catch (error) {
-      // Error handling is done in the hook via console, but we could add toast here
+    } catch (error: any) {
       console.error("Failed to send email", error)
+      toast.error("Failed to send email", {
+        description: error?.message || "Please check the email details and try again."
+      })
+      throw error // Re-throw so dialog knows send failed
     }
   }
 

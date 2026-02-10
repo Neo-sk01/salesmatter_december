@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { researchLead } from "@/lib/agents/research-agent";
-import { draftEmail } from "@/lib/agents/drafting-agent";
+import { draftEmail, OpenAIError } from "@/lib/agents/drafting-agent";
 import { sendEmail } from "@/lib/services/everlytic";
 import { ImportedLead } from "@/types";
 import { createClient } from "@supabase/supabase-js";
@@ -92,8 +92,20 @@ export async function POST(req: NextRequest) {
                         researchSummary: researchPayload, // Return full payload so sources are available immediately
                         sendResult: sendResult,
                     };
-                } catch (err) {
+                } catch (err: any) {
                     console.error(`Failed to process lead ${lead.id}:`, err);
+
+                    // Check if it's an OpenAI-specific error
+                    if (err instanceof OpenAIError) {
+                        return {
+                            leadId: lead.id,
+                            status: "failed",
+                            error: err.userMessage,
+                            errorCode: err.code,
+                            retryable: err.retryable,
+                        };
+                    }
+
                     return {
                         leadId: lead.id,
                         status: "failed",
@@ -103,9 +115,33 @@ export async function POST(req: NextRequest) {
             })
         );
 
+        // Check if ALL results failed with the same OpenAI error (like quota exceeded)
+        // In this case, bubble up the error to the top level for better UX
+        const allFailed = results.every(r => r.status === "failed");
+        const firstError = results.find(r => r.errorCode);
+
+        if (allFailed && firstError?.errorCode) {
+            return NextResponse.json({
+                error: firstError.error,
+                errorCode: firstError.errorCode,
+                retryable: firstError.retryable,
+                drafts: results,
+            }, { status: 503 });
+        }
+
         return NextResponse.json({ drafts: results });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error generating drafts:", error);
+
+        // Handle OpenAI errors at the top level too
+        if (error instanceof OpenAIError) {
+            return NextResponse.json({
+                error: error.userMessage,
+                errorCode: error.code,
+                retryable: error.retryable,
+            }, { status: 503 });
+        }
+
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }
