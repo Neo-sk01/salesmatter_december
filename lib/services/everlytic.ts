@@ -10,6 +10,7 @@ export interface EmailParams {
     to: string;
     subject: string;
     body: string;
+    bcc?: string;
 }
 
 export interface EmailSendResult {
@@ -60,7 +61,7 @@ function httpsRequest(
 
 
 export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
-    const { to, subject, body } = params;
+    const { to, subject, body, bcc } = params;
 
     // Validate required fields
     if (!to || !to.trim()) {
@@ -109,6 +110,9 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
     // Create Basic Auth header
     const authString = Buffer.from(`${username}:${password}`).toString("base64");
 
+    // Auto-BCC the sender so they receive a copy in their inbox
+    const bccAddress = bcc || senderEmail;
+
     // Construct request body per Everlytic API format
     const requestBody = {
         headers: {
@@ -116,6 +120,7 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
             to: to.trim(),
             subject: subject.trim(),
             reply_to: senderEmail,
+            bcc: bccAddress,
         },
         body: {
             html: (body || "").replace(/\n/g, "<br/>"),
@@ -217,7 +222,7 @@ function parseEverlyticError(responseBody: string, statusCode: number): string {
             case "10601":
             case "10900":
                 // These are generic errors - often means domain not verified or sender issue
-                return "Email could not be sent. Please verify that the sender domain (info@memeburn.com) is properly configured in Everlytic.";
+                return `Email could not be sent. Please verify that the sender domain (${process.env.EVERLYTIC_SENDER_EMAIL || 'unknown'}) is properly configured in Everlytic.`;
             case "10602":
                 return "Invalid recipient email address.";
             case "10603":
