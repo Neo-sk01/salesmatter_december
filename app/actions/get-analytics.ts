@@ -1,9 +1,9 @@
 'use server'
 
-import { getEventCountsByType, getDailyEventCounts } from "@/lib/db/email-events-db";
-import { EmailMetrics, DailyMetric } from "@/types";
+import { getEventCountsByType, getDailyEventCounts, getEventsByTimeRange } from "@/lib/db/email-events-db";
+import { EmailMetrics, DailyMetric, RecentSentEmail } from "@/types";
 
-export async function getAnalyticsData(): Promise<{ metrics: EmailMetrics; dailyMetrics: DailyMetric[] }> {
+export async function getAnalyticsData(): Promise<{ metrics: EmailMetrics; dailyMetrics: DailyMetric[]; recentSentEmails: RecentSentEmail[] }> {
     try {
         const endDate = new Date();
         const startDate = new Date();
@@ -56,7 +56,16 @@ export async function getAnalyticsData(): Promise<{ metrics: EmailMetrics; daily
             replied: d.replied
         }));
 
-        return { metrics, dailyMetrics };
+        // 3. Fetch recent sent emails
+        const recentEvents = await getEventsByTimeRange(startDate, endDate, 'sent');
+        const recentSentEmails: RecentSentEmail[] = recentEvents.slice(0, 5).map(e => ({
+            id: e.message_id,
+            email: e.email,
+            subject: (e.raw_payload as any)?.subject || "Sent Email",
+            sentAt: e.occurred_at
+        }));
+
+        return { metrics, dailyMetrics, recentSentEmails };
     } catch (error) {
         console.error("Error fetching analytics data:", error);
         return {
@@ -64,7 +73,8 @@ export async function getAnalyticsData(): Promise<{ metrics: EmailMetrics; daily
                 sent: 0, delivered: 0, opened: 0, clicked: 0, replied: 0, bounced: 0,
                 openRate: 0, clickRate: 0, replyRate: 0, bounceRate: 0
             },
-            dailyMetrics: []
+            dailyMetrics: [],
+            recentSentEmails: []
         };
     }
 }

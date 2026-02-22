@@ -98,3 +98,10 @@ export type EmailSendResult = {
   error?: string
   details?: any
 }
+
+export type RecentSentEmail = {
+  id: string
+  email: string
+  subject: string
+  sentAt: string
+}

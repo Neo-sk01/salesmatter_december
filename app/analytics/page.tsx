@@ -19,7 +19,7 @@ import {
 import { WebhookStatusPill, WebhookStatusBanner } from "@/components/webhook-status-card"
 
 export default function AnalyticsPage() {
-  const { metrics, dailyMetrics, drafts } = useOutreach()
+  const { metrics, dailyMetrics, drafts, recentSentEmails } = useOutreach()
 
   const sentDrafts = drafts.filter((d) => d.status === "sent")
 
@@ -220,37 +220,26 @@ export default function AnalyticsPage() {
             <CardTitle className="text-sm font-medium">Recent Sent Emails</CardTitle>
           </CardHeader>
           <CardContent>
-            {sentDrafts.length === 0 ? (
+            {(!recentSentEmails || recentSentEmails.length === 0) ? (
               <div className="text-center py-8 text-muted-foreground text-sm">
                 No emails sent yet. Start by creating drafts and sending them.
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {sentDrafts.slice(0, 5).map((draft) => (
-                  <div key={draft.id} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+                {recentSentEmails.slice(0, 5).map((email, index) => (
+                  <div key={email.id || index} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                      {draft.lead.firstName[0]}
-                      {draft.lead.lastName[0]}
+                      {email.email.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
-                        {draft.lead.firstName} {draft.lead.lastName}
+                        {email.email}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">{draft.subject}</p>
+                      <p className="text-xs text-muted-foreground truncate">{email.subject}</p>
                     </div>
                     <div className="text-right">
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Eye className="h-3 w-3" />
-                          Opened
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3" />
-                          No reply
-                        </span>
-                      </div>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Sent {draft.sentAt ? new Date(draft.sentAt).toLocaleDateString() : "—"}
+                        Sent {email.sentAt ? new Date(email.sentAt).toLocaleDateString() : "—"}
                       </p>
                     </div>
                   </div>

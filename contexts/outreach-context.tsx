@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react"
-import type { EmailDraft, ImportedLead, OutreachBatch, EmailMetrics, DailyMetric } from "@/types"
+import type { EmailDraft, ImportedLead, OutreachBatch, EmailMetrics, DailyMetric, RecentSentEmail } from "@/types"
 import { getAnalyticsData } from "@/app/actions/get-analytics"
 
 const DEFAULT_PROMPT_TEMPLATE = `<prompt name="BurnMediaOutreach_SalesMatter" version="1.0">
@@ -177,6 +177,7 @@ interface OutreachContextType {
     resetFlow: () => void
     metrics: EmailMetrics
     dailyMetrics: DailyMetric[]
+    recentSentEmails: RecentSentEmail[]
     setMetrics: (metrics: EmailMetrics) => void
     setDailyMetrics: (metrics: DailyMetric[]) => void
     showOnboarding: boolean
@@ -216,6 +217,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
 
     const [metrics, setMetrics] = useState<EmailMetrics>(INITIAL_METRICS)
     const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([])
+    const [recentSentEmails, setRecentSentEmails] = useState<RecentSentEmail[]>([])
 
     // Loading and error states
     const [isLoadingDrafts, setIsLoadingDrafts] = useState(true)
@@ -333,6 +335,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             const data = await getAnalyticsData()
             setMetrics(data.metrics)
             setDailyMetrics(data.dailyMetrics)
+            setRecentSentEmails(data.recentSentEmails || [])
             setAnalyticsError(null)
         } catch (error: any) {
             console.error("Error loading analytics:", error)
@@ -711,6 +714,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         resetFlow,
         metrics,
         dailyMetrics,
+        recentSentEmails,
         setMetrics,
         setDailyMetrics,
         showOnboarding,
