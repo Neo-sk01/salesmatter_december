@@ -7,6 +7,20 @@ import { Input } from "@/components/ui/input"
 import { EmailDraftCard } from "./email-draft-card"
 import { EditDraftDialog } from "./edit-draft-dialog"
 import { Send, CheckSquare, Square, Loader2, FileDown, Mail, X, Check } from "lucide-react"
+import { isToday, isYesterday, subDays, isAfter, format } from "date-fns"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import type { EmailDraft } from "@/types"
 
 type Props = {
@@ -39,7 +53,75 @@ export function DraftsList({
   const [exportEmail, setExportEmail] = useState("neosekaleli@carbosoftware.com")
   const [exportMessage, setExportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const pendingDrafts = drafts.filter((d) => d.status !== "sent")
+  // Filtering & Sorting State
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [sortOrder, setSortOrder] = useState("newest")
+
+  // Filter, Sort, and Group active drafts
+  const pendingDrafts = [...drafts]
+    .filter((d) => d.status !== "sent")
+    .filter((d) => {
+      // 1. Status Filter
+      if (statusFilter !== "all" && d.status !== statusFilter) return false;
+
+      // 2. Search Filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const leadName = `${d.lead.firstName} ${d.lead.lastName}`.toLowerCase();
+        const company = d.lead.company?.toLowerCase() || "";
+        const subject = d.subject?.toLowerCase() || "";
+
+        if (!leadName.includes(query) && !company.includes(query) && !subject.includes(query)) {
+          return false;
+        }
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      // 3. Sort Order
+      if (sortOrder === "oldest") {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      if (sortOrder === "name-asc") {
+        return a.lead.firstName.localeCompare(b.lead.firstName);
+      }
+      if (sortOrder === "company-asc") {
+        return (a.lead.company || "").localeCompare(b.lead.company || "");
+      }
+      // default: newest
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+  const groupedDrafts = () => {
+    const groups: Record<string, EmailDraft[]> = {
+      "Today": [],
+      "Yesterday": [],
+      "Previous 7 Days": [],
+      "Older": []
+    };
+
+    const now = new Date();
+    const sevenDaysAgo = subDays(now, 7);
+
+    pendingDrafts.forEach((draft) => {
+      const date = new Date(draft.createdAt);
+      if (isToday(date)) {
+        groups["Today"].push(draft);
+      } else if (isYesterday(date)) {
+        groups["Yesterday"].push(draft);
+      } else if (isAfter(date, sevenDaysAgo)) {
+        groups["Previous 7 Days"].push(draft);
+      } else {
+        groups["Older"].push(draft);
+      }
+    });
+
+    // Remove empty groups
+    return Object.entries(groups).filter(([_, items]) => items.length > 0);
+  };
+
+  const activeGroups = groupedDrafts();
 
   const handleSelect = (id: string, selected: boolean) => {
     setSelectedIds((prev) => {
@@ -88,13 +170,55 @@ export function DraftsList({
     }
   }
 
+  // Determine which accordion items to open by default
+  const defaultAccordionValues = ["Today", "Yesterday"];
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Filtering and Sorting Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center bg-card p-3 rounded-lg border border-border sticky top-0 z-20 shadow-sm">
+        <div className="relative flex-1 w-full">
+          <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search leads, companies, or subjects..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9 w-full"
+          />
+        </div>
+        <div className="flex flex-row gap-2 w-full sm:w-auto">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-9 w-[130px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="drafted">Drafted</SelectItem>
+              <SelectItem value="reviewed">Reviewed</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortOrder} onValueChange={setSortOrder}>
+            <SelectTrigger className="h-9 w-[150px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="name-asc">Lead Name (A-Z)</SelectItem>
+              <SelectItem value="company-asc">Company (A-Z)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {/* Export Success/Error Message */}
       {exportMessage && (
         <div className={`flex items-center justify-between rounded-lg border p-3 ${exportMessage.type === 'success'
-            ? 'border-green-200 bg-green-50 text-green-800'
-            : 'border-red-200 bg-red-50 text-red-800'
+          ? 'border-green-200 bg-green-50 text-green-800'
+          : 'border-red-200 bg-red-50 text-red-800'
           }`}>
           <div className="flex items-center gap-2">
             {exportMessage.type === 'success' ? (
@@ -201,23 +325,66 @@ export function DraftsList({
         </div>
       )}
 
-      {/* Draft Cards */}
-      <div className="space-y-2">
-        {drafts.map((draft) => (
-          <EmailDraftCard
-            key={draft.id}
-            draft={draft}
-            isSelected={selectedIds.has(draft.id)}
-            onSelect={handleSelect}
-            onUpdate={onUpdate}
-            onSend={onSend}
-            onDelete={onDelete}
-            onEdit={() => setEditingDraft(draft)}
-            onRegenerate={onRegenerate}
-            isRegenerating={regeneratingId === draft.id}
-          />
-        ))}
-      </div>
+      {/* Draft Groups as Accordions */}
+      {activeGroups.length > 0 ? (
+        <Accordion type="multiple" defaultValue={defaultAccordionValues} className="space-y-4">
+          {activeGroups.map(([groupName, groupDrafts]) => (
+            <AccordionItem value={groupName} key={groupName} className="border rounded-lg bg-card px-4 shadow-sm">
+              <AccordionTrigger className="hover:no-underline py-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground text-sm">
+                    {groupName}
+                  </h3>
+                  <Badge variant="secondary" className="font-normal text-xs px-1.5 py-0">
+                    {groupDrafts.length}
+                  </Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2 pb-4 border-t">
+                <div className="space-y-2">
+                  {groupDrafts.map((draft) => (
+                    <EmailDraftCard
+                      key={draft.id}
+                      draft={draft}
+                      isSelected={selectedIds.has(draft.id)}
+                      onSelect={handleSelect}
+                      onUpdate={onUpdate}
+                      onSend={onSend}
+                      onDelete={onDelete}
+                      onEdit={() => setEditingDraft(draft)}
+                      onRegenerate={onRegenerate}
+                      isRegenerating={regeneratingId === draft.id}
+                    />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-10 text-center rounded-lg border border-dashed border-border bg-muted/20">
+          <Mail className="h-8 w-8 text-muted-foreground/50 mb-3" />
+          <h3 className="text-sm font-medium text-foreground">No drafts found</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+            {searchQuery || statusFilter !== 'all'
+              ? "Try adjusting your search query or filters to find what you're looking for."
+              : "You don't have any pending drafts."}
+          </p>
+          {(searchQuery || statusFilter !== 'all') && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("all");
+              }}
+            >
+              Clear Filters
+            </Button>
+          )}
+        </div>
+      )}
 
       <EditDraftDialog
         draft={editingDraft}

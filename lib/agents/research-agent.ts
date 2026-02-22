@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { TavilySearch } from "@langchain/tavily";
 import { ImportedLead } from "@/types";
+import { getAiProvider } from "@/lib/actions/settings";
 
 export interface ResearchResult {
     summary: string;
@@ -8,8 +9,18 @@ export interface ResearchResult {
 }
 
 export async function researchLead(lead: ImportedLead): Promise<ResearchResult> {
+    const provider = await getAiProvider();
+
+    const gatewayOptions = provider === "gateway" ? {
+        baseURL: process.env.VERCEL_AI_GATEWAY_URL || "https://gateway.ai.vercel.com/v1/workspace/project/openai",
+        defaultHeaders: process.env.AI_GATEWAY_API_KEY ? {
+            "Authorization": `Bearer ${process.env.AI_GATEWAY_API_KEY}`
+        } : undefined
+    } : {};
+
     const openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
+        ...gatewayOptions
     });
 
     const tavilyApiKey = process.env.TAVILY_API_KEY;
@@ -102,12 +113,20 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
                         }
                     }
                 }
-            } catch (searchError) {
-                console.warn(`Search query failed: ${query}`, searchError);
+            } catch (searchError: any) {
+                console.warn(`Search query failed: ${query} - ${searchError?.statusText || searchError?.message || 'Unknown error'}`);
+                if (searchError?.status === 429 || searchError?.statusText === 'Too Many Requests' || searchError?.message?.includes('429')) {
+                    console.log("Tavily rate limit reached. Stopping further queries.");
+                    break;
+                }
             }
         }
 
         console.log(`Tavily search completed. Found ${allResults.length} results from ${sources.length} sources`);
+
+        if (allResults.length === 0) {
+            throw new Error("No search results found from any query.");
+        }
 
         // Deduplicate sources by URL
         const uniqueSources = sources.filter(

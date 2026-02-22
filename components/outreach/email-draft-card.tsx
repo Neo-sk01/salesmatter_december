@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Send, Pencil, Trash2, Check, X, ChevronDown, ChevronUp, Mail, Building2, User, Search, RefreshCw } from "lucide-react"
+import { Send, Pencil, Trash2, Check, X, ChevronDown, ChevronUp, Mail, Building2, User, Search, RefreshCw, Clock } from "lucide-react"
+import { format } from "date-fns"
 import { ResearchModal } from "@/components/outreach/research-modal"
 import { cn } from "@/lib/utils"
 import type { EmailDraft } from "@/types"
@@ -64,6 +65,10 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, 
             <Badge className={cn("text-[10px] px-1.5 py-0 font-medium", statusConfig[draft.status].color)}>
               {statusConfig[draft.status].label}
             </Badge>
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground ml-auto">
+              <Clock className="h-3 w-3" />
+              {format(new Date(draft.createdAt), "h:mm a")}
+            </div>
           </div>
 
           <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">

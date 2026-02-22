@@ -3,6 +3,7 @@ import { ChatOpenAI } from "@langchain/openai";
 import { ImportedLead } from "@/types";
 import { z } from "zod";
 import { CallbackHandler } from "@langfuse/langchain";
+import { getAiProvider } from "@/lib/actions/settings";
 
 const emailSchema = z.object({
     subject: z.string().describe("The subject line of the email"),
@@ -92,10 +93,20 @@ export async function draftEmail(
         userId: "system",
     });
 
+    const provider = await getAiProvider();
+
+    const gatewayConfig = provider === "gateway" ? {
+        baseURL: process.env.VERCEL_AI_GATEWAY_URL || "https://gateway.ai.vercel.com/v1/workspace/project/openai",
+        defaultHeaders: process.env.AI_GATEWAY_API_KEY ? {
+            "Authorization": `Bearer ${process.env.AI_GATEWAY_API_KEY}`
+        } : undefined
+    } : undefined;
+
     const model = new ChatOpenAI({
         modelName: "gpt-4o-mini",
         temperature: 0.7,
         callbacks: [handler],
+        ...(gatewayConfig && { configuration: gatewayConfig })
     });
 
     const structuredModel = model.withStructuredOutput(emailSchema);
