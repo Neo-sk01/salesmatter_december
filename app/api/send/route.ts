@@ -35,6 +35,28 @@ export async function POST(req: NextRequest) {
         const results = await Promise.all(
             drafts.map(async (draft: EmailDraft) => {
                 try {
+                    // ── Guard: skip if already sent ──────────────────────────
+                    if (draft.id) {
+                        const supabase = getSupabase();
+                        const { data: existing } = await supabase
+                            .from("email_drafts")
+                            .select("status")
+                            .eq("id", draft.id)
+                            .single();
+
+                        if (existing?.status === "sent") {
+                            console.log(`[send-api] Skipping already-sent draft ${draft.id} (${draft.email})`);
+                            return {
+                                id: draft.id,
+                                leadId: draft.leadId,
+                                email: draft.email,
+                                status: "already_sent",
+                                error: null,
+                            };
+                        }
+                    }
+                    // ────────────────────────────────────────────────────────
+
                     const result = await sendEmail({
                         to: draft.email,
                         subject: draft.subject,
@@ -101,6 +123,8 @@ export async function POST(req: NextRequest) {
 
         const successCount = results.filter((r) => r.status === "sent").length;
         const failedCount = results.filter((r) => r.status === "failed").length;
+        const skippedCount = results.filter((r) => r.status === "already_sent").length;
+
 
         return NextResponse.json({
             results,
@@ -108,6 +132,7 @@ export async function POST(req: NextRequest) {
                 total: drafts.length,
                 sent: successCount,
                 failed: failedCount,
+                skipped: skippedCount,
             },
         });
     } catch (error) {
