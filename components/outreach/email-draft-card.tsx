@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Send, Pencil, Trash2, Check, X, ChevronDown, ChevronUp, Mail, Building2, User, Search, RefreshCw, Clock } from "lucide-react"
 import { format } from "date-fns"
 import { ResearchModal } from "@/components/outreach/research-modal"
+import { Shimmer } from "@/components/ai-elements/shimmer"
 import { cn } from "@/lib/utils"
 import type { EmailDraft } from "@/types"
 
@@ -34,6 +35,13 @@ const statusConfig = {
 
 export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, onEdit, onRegenerate, isRegenerating }: Props) {
   const [isExpanded, setIsExpanded] = useState(false)
+
+  // Auto-expand to show shimmer on body when regenerating
+  useEffect(() => {
+    if (isRegenerating) {
+      setIsExpanded(true)
+    }
+  }, [isRegenerating])
 
 
   const isSent = draft.status === "sent"
@@ -82,15 +90,22 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, 
             </span>
           </div>
 
-          <div className="mt-2 space-y-1">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="mt-2 space-y-1 w-full max-w-full overflow-hidden">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground w-full">
               <Mail className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">{draft.lead.email}</span>
             </div>
             {!isExpanded && (
-              <p className="text-xs text-muted-foreground truncate">
-                <span className="font-medium text-foreground">Subject:</span> {draft.subject}
-              </p>
+              <div className="text-xs text-muted-foreground truncate w-full flex gap-1">
+                <span className="font-medium text-foreground flex-shrink-0">Subject:</span>
+                <div className="min-w-0 flex-1 truncate">
+                  {isRegenerating ? (
+                    <Shimmer as="span" className="truncate">{draft.subject}</Shimmer>
+                  ) : (
+                    <span className="truncate">{draft.subject}</span>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -117,7 +132,7 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, 
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
-              {onRegenerate && (
+              {onRegenerate && !isSent && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -126,7 +141,7 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, 
                   disabled={isRegenerating}
                   title="Regenerate draft with fresh research"
                 >
-                  <RefreshCw className={cn("h-3.5 w-3.5", isRegenerating && "animate-spin")} />
+                  <RefreshCw className={cn("h-3.5 w-3.5", isRegenerating && "animate-spin text-amber-500")} />
                 </Button>
               )}
               <Button
@@ -163,15 +178,27 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, 
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-0">
-          <div className="space-y-3 border-t border-border/50 pt-3 mt-1">
-            <div>
+        <div className="px-4 pb-4 pt-0 w-full overflow-hidden">
+          <div className="space-y-3 border-t border-border/50 pt-3 mt-1 w-full">
+            <div className="w-full">
               <p className="text-xs text-muted-foreground mb-0.5">Subject</p>
-              <p className="text-sm text-foreground">{draft.subject}</p>
+              {isRegenerating ? (
+                <Shimmer as="p" className="text-sm block w-full">
+                  {draft.subject}
+                </Shimmer>
+              ) : (
+                <p className="text-sm text-foreground">{draft.subject}</p>
+              )}
             </div>
-            <div>
+            <div className="w-full">
               <p className="text-xs text-muted-foreground mb-0.5">Body</p>
-              <p className="text-sm whitespace-pre-wrap text-foreground/85 leading-relaxed">{draft.body}</p>
+              {isRegenerating ? (
+                <Shimmer as="p" className="text-sm leading-relaxed whitespace-pre-wrap block w-full">
+                  {draft.body}
+                </Shimmer>
+              ) : (
+                <p className="text-sm whitespace-pre-wrap text-foreground/85 leading-relaxed">{draft.body}</p>
+              )}
             </div>
           </div>
         </div>

@@ -126,6 +126,10 @@ export async function draftEmail(
     ${researchSummary}
     
     Task: Write a cold outreach email based on the above.
+    The email must end with the following signature precisely (do not add any extra names or sign-offs):
+
+    Carl Davis
+    Burn Media Group
   `;
 
     try {
