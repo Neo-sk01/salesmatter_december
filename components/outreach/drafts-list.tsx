@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { EmailDraftCard } from "./email-draft-card"
 import { EditDraftDialog } from "./edit-draft-dialog"
-import { Send, CheckSquare, Square, Loader2, FileDown, Mail, X, Check } from "lucide-react"
+import { Send, CheckSquare, Square, Loader2, FileDown, Mail, X, Check, RotateCcw } from "lucide-react"
 import { isToday, isYesterday, subDays, isAfter, format } from "date-fns"
 import {
   Select,
@@ -30,7 +30,9 @@ type Props = {
   onSendBulk: (ids: string[]) => Promise<void>
   onDelete: (id: string) => void
   onRegenerate?: (id: string) => void
+  onRegenerateSelected?: (ids: string[]) => void
   regeneratingId?: string | null
+  isRegeneratingAll?: boolean
   onExport?: (recipientEmail: string, draftIds?: string[]) => Promise<{ success: boolean; message?: string; error?: string }>
   isExporting?: boolean
 }
@@ -42,7 +44,9 @@ export function DraftsList({
   onSendBulk,
   onDelete,
   onRegenerate,
+  onRegenerateSelected,
   regeneratingId,
+  isRegeneratingAll,
   onExport,
   isExporting
 }: Props) {
@@ -259,6 +263,24 @@ export function DraftsList({
               )}
             </div>
             <div className="flex items-center gap-2">
+              {/* Regenerate Selected Button */}
+              {onRegenerateSelected && selectedIds.size > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                  onClick={() => onRegenerateSelected(Array.from(selectedIds))}
+                  disabled={isRegeneratingAll}
+                  title="Regenerate selected drafts with fresh research"
+                >
+                  {isRegeneratingAll ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="h-4 w-4" />
+                  )}
+                  Regenerate ({selectedIds.size})
+                </Button>
+              )}
               {/* Export Button */}
               {onExport && (
                 <Button
@@ -354,6 +376,7 @@ export function DraftsList({
                       onEdit={() => setEditingDraft(draft)}
                       onRegenerate={onRegenerate}
                       isRegenerating={regeneratingId === draft.id}
+                      disableRegenerate={isRegeneratingAll && regeneratingId !== draft.id}
                     />
                   ))}
                 </div>

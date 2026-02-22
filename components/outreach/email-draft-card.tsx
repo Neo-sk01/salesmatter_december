@@ -23,6 +23,7 @@ type Props = {
   onEdit: () => void
   onRegenerate?: (id: string) => void
   isRegenerating?: boolean
+  disableRegenerate?: boolean
 }
 
 const statusConfig = {
@@ -33,7 +34,7 @@ const statusConfig = {
   failed: { label: "Failed", color: "bg-red-100 text-red-700" },
 }
 
-export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, onEdit, onRegenerate, isRegenerating }: Props) {
+export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, onEdit, onRegenerate, isRegenerating, disableRegenerate }: Props) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   // Auto-expand to show shimmer on body when regenerating
@@ -138,7 +139,7 @@ export function EmailDraftCard({ draft, isSelected, onSelect, onSend, onDelete, 
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-amber-600 hover:bg-amber-50"
                   onClick={() => onRegenerate(draft.id)}
-                  disabled={isRegenerating}
+                  disabled={isRegenerating || disableRegenerate}
                   title="Regenerate draft with fresh research"
                 >
                   <RefreshCw className={cn("h-3.5 w-3.5", isRegenerating && "animate-spin text-amber-500")} />

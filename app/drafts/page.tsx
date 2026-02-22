@@ -7,7 +7,7 @@ import { FileSelectorModal } from "@/components/outreach/file-selector-modal"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner, LoadingSkeleton } from "@/components/ui/error-banner"
 import { useOutreach } from "@/hooks/use-outreach"
-import { Code2, FileEdit, ArrowRight, Sparkles, FolderOpen, Loader2 } from "lucide-react"
+import { Code2, FileEdit, ArrowRight, Sparkles, FolderOpen, Loader2, RotateCcw } from "lucide-react"
 import Link from "next/link"
 
 export default function DraftsPage() {
@@ -21,6 +21,10 @@ export default function DraftsPage() {
     deleteDraft,
     regenerateDraft,
     regeneratingDraftId,
+    regenerateAllDrafts,
+    regenerateSelectedDrafts,
+    isRegeneratingAll,
+    regeneratingAllProgress,
     exportDraftsForReview,
     isExporting,
     // Loading and error states
@@ -67,6 +71,30 @@ export default function DraftsPage() {
               </Button>
             </PromptTemplateModal>
             {pendingDrafts.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-transparent text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
+                onClick={regenerateAllDrafts}
+                disabled={isRegeneratingAll || isExporting}
+                title="Regenerate all pending drafts with fresh research"
+              >
+                {isRegeneratingAll ? (
+                  <>
+                    <RotateCcw className="h-4 w-4 animate-spin" />
+                    {regeneratingAllProgress
+                      ? `Regenerating ${regeneratingAllProgress.current} / ${regeneratingAllProgress.total}`
+                      : "Regenerating..."}
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="h-4 w-4" />
+                    Regenerate All
+                  </>
+                )}
+              </Button>
+            )}
+            {pendingDrafts.length > 0 && (
               <Link href="/send">
                 <Button size="sm" className="gap-2">
                   Ready to Send
@@ -112,7 +140,9 @@ export default function DraftsPage() {
                     onSendBulk={sendBulk}
                     onDelete={deleteDraft}
                     onRegenerate={regenerateDraft}
+                    onRegenerateSelected={regenerateSelectedDrafts}
                     regeneratingId={regeneratingDraftId}
+                    isRegeneratingAll={isRegeneratingAll}
                     onExport={exportDraftsForReview}
                     isExporting={isExporting}
                   />

@@ -174,6 +174,10 @@ interface OutreachContextType {
     deleteDraft: (draftId: string) => void
     regenerateDraft: (draftId: string) => Promise<void>
     regeneratingDraftId: string | null
+    regenerateAllDrafts: () => Promise<void>
+    regenerateSelectedDrafts: (ids: string[]) => Promise<void>
+    isRegeneratingAll: boolean
+    regeneratingAllProgress: { current: number; total: number } | null
     resetFlow: () => void
     metrics: EmailMetrics
     dailyMetrics: DailyMetric[]
@@ -492,7 +496,15 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             const response = await fetch("/api/send", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ drafts: [draft] }),
+                body: JSON.stringify({
+                    drafts: [{
+                        id: draft.id,
+                        leadId: draft.leadId,
+                        email: draft.lead.email,
+                        subject: draft.subject,
+                        body: draft.body,
+                    }]
+                }),
             })
 
             const result = await response.json()
@@ -513,11 +525,20 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         const draftsToSend = drafts.filter((d) => draftIds.includes(d.id))
         if (draftsToSend.length === 0) return
 
+        // Map to the flat shape the /api/send route expects
+        const payload = draftsToSend.map((d) => ({
+            id: d.id,
+            leadId: d.leadId,
+            email: d.lead.email,
+            subject: d.subject,
+            body: d.body,
+        }))
+
         try {
             const response = await fetch("/api/send", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ drafts: draftsToSend }),
+                body: JSON.stringify({ drafts: payload }),
             })
 
             const result = await response.json()
@@ -525,7 +546,6 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             // Update statuses based on results
             const results = result.results || []
             const successIds = new Set(results.filter((r: any) => r.status === "sent").map((r: any) =>
-                // We match by email as leadId might be tricky if not passed back or unique
                 draftsToSend.find(d => d.lead.email === r.email)?.id
             ).filter(Boolean))
 
@@ -535,7 +555,6 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
                         return { ...d, status: "sent", sentAt: new Date().toISOString() }
                     }
                     if (draftIds.includes(d.id) && !successIds.has(d.id)) {
-                        // Was attempted but not in success list (or failed)
                         return { ...d, status: "failed" }
                     }
                     return d
@@ -596,6 +615,8 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const [regeneratingDraftId, setRegeneratingDraftId] = useState<string | null>(null)
+    const [isRegeneratingAll, setIsRegeneratingAll] = useState(false)
+    const [regeneratingAllProgress, setRegeneratingAllProgress] = useState<{ current: number; total: number } | null>(null)
     const [isExporting, setIsExporting] = useState(false)
 
     const exportDraftsForReview = useCallback(async (
@@ -693,6 +714,127 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         }
     }, [drafts, promptTemplate])
 
+    const regenerateAllDrafts = useCallback(async () => {
+        const pendingDrafts = drafts.filter((d) => d.status !== "sent")
+        if (pendingDrafts.length === 0 || isRegeneratingAll) return
+
+        setIsRegeneratingAll(true)
+        setRegeneratingAllProgress({ current: 0, total: pendingDrafts.length })
+
+        for (let i = 0; i < pendingDrafts.length; i++) {
+            const draft = pendingDrafts[i]
+            setRegeneratingAllProgress({ current: i + 1, total: pendingDrafts.length })
+            setRegeneratingDraftId(draft.id)
+
+            try {
+                const leadForRegeneration = {
+                    id: draft.leadId,
+                    firstName: draft.lead.firstName,
+                    lastName: draft.lead.lastName,
+                    email: draft.lead.email,
+                    company: draft.lead.company,
+                    role: draft.lead.role,
+                    selected: true
+                }
+
+                const response = await fetch("/api/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate }),
+                })
+
+                const result = await response.json()
+                if (result.error) throw new Error(result.error)
+
+                const newDraft = result.drafts?.[0]
+                if (newDraft?.subject && newDraft?.body) {
+                    await fetch(`/api/drafts/${draft.id}`, { method: "DELETE" })
+                    setDrafts((prev) => prev.map((d) => {
+                        if (d.id === draft.id) {
+                            return {
+                                ...d,
+                                id: newDraft.id,
+                                subject: newDraft.subject,
+                                body: newDraft.body,
+                                status: "drafted" as const,
+                                researchSummary: newDraft.researchSummary,
+                                createdAt: new Date().toISOString()
+                            }
+                        }
+                        return d
+                    }))
+                }
+            } catch (error) {
+                console.error(`Failed to regenerate draft ${draft.id}:`, error)
+            }
+        }
+
+        setRegeneratingDraftId(null)
+        setIsRegeneratingAll(false)
+        setRegeneratingAllProgress(null)
+    }, [drafts, promptTemplate, isRegeneratingAll])
+
+    const regenerateSelectedDrafts = useCallback(async (ids: string[]) => {
+        if (ids.length === 0 || isRegeneratingAll) return
+        const selectedDrafts = drafts.filter((d) => ids.includes(d.id))
+        if (selectedDrafts.length === 0) return
+
+        setIsRegeneratingAll(true)
+        setRegeneratingAllProgress({ current: 0, total: selectedDrafts.length })
+
+        for (let i = 0; i < selectedDrafts.length; i++) {
+            const draft = selectedDrafts[i]
+            setRegeneratingAllProgress({ current: i + 1, total: selectedDrafts.length })
+            setRegeneratingDraftId(draft.id)
+
+            try {
+                const leadForRegeneration = {
+                    id: draft.leadId,
+                    firstName: draft.lead.firstName,
+                    lastName: draft.lead.lastName,
+                    email: draft.lead.email,
+                    company: draft.lead.company,
+                    role: draft.lead.role,
+                    selected: true
+                }
+
+                const response = await fetch("/api/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate }),
+                })
+
+                const result = await response.json()
+                if (result.error) throw new Error(result.error)
+
+                const newDraft = result.drafts?.[0]
+                if (newDraft?.subject && newDraft?.body) {
+                    await fetch(`/api/drafts/${draft.id}`, { method: "DELETE" })
+                    setDrafts((prev) => prev.map((d) => {
+                        if (d.id === draft.id) {
+                            return {
+                                ...d,
+                                id: newDraft.id,
+                                subject: newDraft.subject,
+                                body: newDraft.body,
+                                status: "drafted" as const,
+                                researchSummary: newDraft.researchSummary,
+                                createdAt: new Date().toISOString()
+                            }
+                        }
+                        return d
+                    }))
+                }
+            } catch (error) {
+                console.error(`Failed to regenerate draft ${draft.id}:`, error)
+            }
+        }
+
+        setRegeneratingDraftId(null)
+        setIsRegeneratingAll(false)
+        setRegeneratingAllProgress(null)
+    }, [drafts, promptTemplate, isRegeneratingAll])
+
     const value = {
         importedLeads,
         drafts,
@@ -711,6 +853,10 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         deleteDraft,
         regenerateDraft,
         regeneratingDraftId,
+        regenerateAllDrafts,
+        regenerateSelectedDrafts,
+        isRegeneratingAll,
+        regeneratingAllProgress,
         resetFlow,
         metrics,
         dailyMetrics,
