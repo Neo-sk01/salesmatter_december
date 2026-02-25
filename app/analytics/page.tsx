@@ -17,6 +17,7 @@ import {
   Legend,
 } from "recharts"
 import { WebhookStatusPill, WebhookStatusBanner } from "@/components/webhook-status-card"
+import { WebhookReportButton } from "@/components/webhook-report-dialog"
 
 export default function AnalyticsPage() {
   const { metrics, dailyMetrics, drafts, recentSentEmails } = useOutreach()
@@ -77,7 +78,10 @@ export default function AnalyticsPage() {
               Track your email performance and optimize your outreach
             </p>
           </div>
-          <WebhookStatusPill />
+          <div className="flex items-center gap-2">
+            <WebhookReportButton />
+            <WebhookStatusPill />
+          </div>
         </div>
 
         {/* Thin Status Banner */}

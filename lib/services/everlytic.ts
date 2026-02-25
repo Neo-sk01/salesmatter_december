@@ -373,7 +373,7 @@ export async function reprocessFailedWebhooks(): Promise<ReprocessResult> {
                 },
             },
             "",
-            60000 // 60 second timeout for reprocessing
+            120000 // 120 second timeout for reprocessing
         );
 
         console.log('[everlytic] Reprocess failed webhooks response:', response.statusCode, response.body);
