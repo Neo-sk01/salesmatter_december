@@ -13,6 +13,7 @@ export async function GET() {
         company: "Media Mark",
         role: "CEO",
         email: "wayne@mediamark.com",
+        selected: true,
     };
 
     const userPrompt = "We are introducing SalesMatter, our AI-powered outbound platform, to help them automate personalization and tighten their outreach flow without the manual effort.";
