@@ -62,17 +62,21 @@ export default function LeadsPage() {
             const { leads } = await leadsRes.json()
 
             if (leads && leads.length > 0) {
-              const mappedLeads: ImportedLead[] = leads.map((l: any) => ({
-                id: l.id,
-                firstName: l.first_name || l.firstName || "",
-                lastName: l.last_name || l.lastName || "",
-                email: l.email || "",
-                company: l.company || "",
-                role: l.role || "",
-                linkedinUrl: l.linkedin_url || l.linkedinUrl || "",
-                companyUrl: l.company_url || l.companyUrl || "",
-                selected: true,
-              }))
+              const mappedLeads: ImportedLead[] = leads.map((l: any) => {
+                const { id, first_name, firstName, last_name, lastName, email, company, role, linkedin_url, linkedinUrl, company_url, companyUrl, created_at, updated_at, ...rest } = l;
+                return {
+                  id: l.id,
+                  firstName: l.first_name || l.firstName || "",
+                  lastName: l.last_name || l.lastName || "",
+                  email: l.email || "",
+                  company: l.company || "",
+                  role: l.role || "",
+                  linkedinUrl: l.linkedin_url || l.linkedinUrl || "",
+                  companyUrl: l.company_url || l.companyUrl || "",
+                  selected: true,
+                  customFields: rest,
+                };
+              })
               importLeads(mappedLeads)
               return
             }
@@ -92,17 +96,31 @@ export default function LeadsPage() {
 
             // 3. Transform Data
             setMappingStatus("Mapping data...")
-            const mappedLeads: ImportedLead[] = data.map((row: any, idx: number) => ({
-              id: `lead-${Date.now()}-${idx}`,
-              firstName: row[mapping.firstName] || "",
-              lastName: row[mapping.lastName] || "",
-              email: row[mapping.email] || "",
-              company: row[mapping.company] || "",
-              role: row[mapping.role || ""] || "",
-              linkedinUrl: row[mapping.linkedin || ""] || "",
-              companyUrl: row[mapping.companyUrl || ""] || "",
-              selected: true,
-            })).filter((l: ImportedLead) => l.email)
+            const mappedLeads: ImportedLead[] = data.map((row: any, idx: number) => {
+              const mappedValues = new Set([
+                mapping.firstName, mapping.lastName, mapping.email, 
+                mapping.company, mapping.role, mapping.linkedin, mapping.companyUrl
+              ].filter(Boolean));
+              const customFields: Record<string, any> = {};
+              for (const [key, value] of Object.entries(row)) {
+                if (!mappedValues.has(key)) {
+                  customFields[key] = value;
+                }
+              }
+              
+              return {
+                id: `lead-${Date.now()}-${idx}`,
+                firstName: mapping.firstName ? (row[mapping.firstName] || "") : "",
+                lastName: mapping.lastName ? (row[mapping.lastName] || "") : "",
+                email: mapping.email ? (row[mapping.email] || "") : "",
+                company: mapping.company ? (row[mapping.company] || "") : "",
+                role: mapping.role ? (row[mapping.role] || "") : "",
+                linkedinUrl: mapping.linkedin ? (row[mapping.linkedin] || "") : "",
+                companyUrl: mapping.companyUrl ? (row[mapping.companyUrl] || "") : "",
+                selected: true,
+                customFields,
+              }
+            }).filter((l: ImportedLead) => l.email)
 
             importLeads(mappedLeads)
             return

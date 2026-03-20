@@ -37,6 +37,11 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
         ? `- Company Website: ${lead.companyUrl}`
         : "";
 
+    const customFieldsText = Object.entries(lead.customFields || {})
+        .filter(([_, v]) => v !== undefined && v !== null && v !== "")
+        .map(([k, v]) => `- ${k}: ${v}`)
+        .join("\n");
+
     // Build search queries for Tavily
     const searchQueries: string[] = [
         `${lead.company} company news announcements`,
@@ -148,6 +153,7 @@ Prospect Details:
 - Role: ${lead.role}
 ${linkedinContext}
 ${companyUrlContext}
+${customFieldsText}
 
 WEB SEARCH RESULTS:
 ${searchContext || "No search results found."}
@@ -202,6 +208,7 @@ If no relevant information was found, state that clearly and provide general con
                         - Role: ${lead.role}
                         ${linkedinContext}
                         ${companyUrlContext}
+                        ${customFieldsText}
                         
                         Task: Write a focused 150-word summary of this person/company based on your knowledge.
                         Focus on:

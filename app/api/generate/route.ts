@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { researchLead } from "@/lib/agents/research-agent";
 import { draftEmail, OpenAIError } from "@/lib/agents/drafting-agent";
+import { regenerateEmail } from "@/lib/agents/regeneration-agent";
 import { sendEmail } from "@/lib/services/everlytic";
 import { ImportedLead } from "@/types";
 import { createClient } from "@supabase/supabase-js";
@@ -35,7 +36,9 @@ export async function POST(req: NextRequest) {
                     const summary = researchResult.summary;
 
                     // 2. Draft
-                    const draft = await draftEmail(lead, summary, promptTemplate, isRegenerate);
+                    const draft = isRegenerate
+                        ? await regenerateEmail(lead, summary, promptTemplate)
+                        : await draftEmail(lead, summary, promptTemplate);
 
                     // 3. Send (if requested)
                     let sendResult = null;

@@ -71,6 +71,7 @@ export type ImportedLead = {
   linkedinUrl?: string
   companyUrl?: string
   selected: boolean
+  customFields?: Record<string, any>
 }
 
 export type EmailMetrics = {
