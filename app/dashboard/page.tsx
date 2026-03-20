@@ -12,8 +12,7 @@ import { useOutreach } from "@/hooks/use-outreach"
 import { ArrowRight, Sparkles, Loader2, Code2, Users, CheckCircle2 } from "lucide-react"
 import type { ImportedLead } from "@/types"
 import Link from "next/link"
-
-
+import { toast } from "sonner"
 import { MappingResult } from "@/lib/agents/mapping-agent"
 
 // ... imports
