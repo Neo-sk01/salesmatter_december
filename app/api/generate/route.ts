@@ -16,7 +16,7 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { leads, promptTemplate, sendImmediately = false } = await req.json();
+        const { leads, promptTemplate, sendImmediately = false, isRegenerate = false } = await req.json();
 
         if (!leads || !Array.isArray(leads)) {
             return NextResponse.json(
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
                     const summary = researchResult.summary;
 
                     // 2. Draft
-                    const draft = await draftEmail(lead, summary, promptTemplate);
+                    const draft = await draftEmail(lead, summary, promptTemplate, isRegenerate);
 
                     // 3. Send (if requested)
                     let sendResult = null;

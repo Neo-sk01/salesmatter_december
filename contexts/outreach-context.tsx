@@ -646,7 +646,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             const response = await fetch("/api/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate }),
+                body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate, isRegenerate: true }),
             })
 
             const result = await response.json()
@@ -706,7 +706,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
                 const response = await fetch("/api/generate", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate }),
+                    body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate, isRegenerate: true }),
                 })
 
                 const result = await response.json()
@@ -767,7 +767,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
                 const response = await fetch("/api/generate", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate }),
+                    body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate, isRegenerate: true }),
                 })
 
                 const result = await response.json()

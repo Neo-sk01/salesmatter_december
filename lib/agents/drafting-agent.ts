@@ -87,7 +87,8 @@ function parseOpenAIError(error: any): OpenAIError {
 export async function draftEmail(
     lead: ImportedLead,
     researchSummary: string,
-    userPrompt: string
+    userPrompt: string,
+    isRegenerate: boolean = false
 ) {
     const handler = new CallbackHandler({
         userId: "system",
