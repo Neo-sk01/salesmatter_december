@@ -4,6 +4,7 @@ import { ImportedLead } from "@/types";
 import { z } from "zod";
 import { CallbackHandler } from "@langfuse/langchain";
 import { getAiProvider } from "@/lib/actions/settings";
+import { loadEmailTemplate } from "@/lib/utils/email-template-loader";
 
 export const emailSchema = z.object({
     subject: z.string().describe("The subject line of the email"),
@@ -112,6 +113,9 @@ export async function draftEmail(
 
     const structuredModel = model.withStructuredOutput(emailSchema);
 
+    // Load the email template from file (single source of truth)
+    const referenceTemplate = loadEmailTemplate();
+
     const customFieldsText = Object.entries(lead.customFields || {})
         .filter(([_, v]) => v !== undefined && v !== null && v !== "")
         .map(([k, v]) => `- ${k}: ${v}`)
@@ -135,24 +139,11 @@ export async function draftEmail(
     
     Task: Write the subject line and body of the cold outreach email incorporating the research summary.
     
-    You MUST use this exact example as the SINGLE SOURCE OF TRUTH for your structure, voice, and tone. Adapt the specific details (like the person's name, company, and research points) but mirror this layout exactly:
+    You MUST use the following reference email as the SINGLE SOURCE OF TRUTH for your structure, voice, tone, KPIs, and footer. Adapt the specific details (like the person's name, company, and research points) but mirror the layout, bullet-point KPIs, and closing signature EXACTLY:
     
-    === REFERENCE EXAMPLE ===
-    Subject: Quick question re [Company] growth
-    Hello Wayne,
-    I read your recent article “Digital transformation: Shaping Mediamark for the future” with real interest. Turning a legacy media sales house into an agile organisation that scales without increasing resources is exactly the kind of bold leadership that sets Mediamark apart, especially with your 21M+ digital reach and growing audio/streaming portfolio.
-    At SalesMatter we help CEOs in media sales do precisely that with outbound: we automate personalised outreach at scale while keeping it human and targeted.
-    Our clients consistently see:
-    •  30% higher meeting rates
-    •  2× more qualified opportunities in their pipeline
-    …all without adding extra sales or marketing headcount.
-    I’d love to share how we’ve helped other media owners achieve similar efficiency gains during periods of rapid change. Would you have 15 minutes next week to explore whether this could support Mediamark’s next growth phase?
-    Best regards,
-    Carl Davis
-    Founder, SalesMatter
-    carl@salesmatter.co.za
-    +27 74 172 5891
-    === END REFERENCE EXAMPLE ===
+    === REFERENCE EMAIL (SINGLE SOURCE OF TRUTH) ===
+    ${referenceTemplate}
+    === END REFERENCE EMAIL ===
     `;
 
     try {

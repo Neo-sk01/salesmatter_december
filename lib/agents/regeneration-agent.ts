@@ -3,6 +3,7 @@ import { ImportedLead } from "@/types";
 import { CallbackHandler } from "@langfuse/langchain";
 import { getAiProvider } from "@/lib/actions/settings";
 import { emailSchema, parseOpenAIError } from "./drafting-agent";
+import { loadEmailTemplate } from "@/lib/utils/email-template-loader";
 
 export async function regenerateEmail(
     lead: ImportedLead,
@@ -31,25 +32,8 @@ export async function regenerateEmail(
 
     const structuredModel = model.withStructuredOutput(emailSchema);
 
-    // Provide the single source of truth template for structural inspiration
-    const REFERENCE_EXAMPLE = `
-    === REFERENCE EXAMPLE ===
-    Subject: Quick question re [Company] growth
-    Hello Wayne,
-    I read your recent article “Digital transformation: Shaping Mediamark for the future” with real interest. Turning a legacy media sales house into an agile organisation that scales without increasing resources is exactly the kind of bold leadership that sets Mediamark apart, especially with your 21M+ digital reach and growing audio/streaming portfolio.
-    At SalesMatter we help CEOs in media sales do precisely that with outbound: we automate personalised outreach at scale while keeping it human and targeted.
-    Our clients consistently see:
-    •  30% higher meeting rates
-    •  2× more qualified opportunities in their pipeline
-    …all without adding extra sales or marketing headcount.
-    I’d love to share how we’ve helped other media owners achieve similar efficiency gains during periods of rapid change. Would you have 15 minutes next week to explore whether this could support Mediamark’s next growth phase?
-    Best regards,
-    Carl Davis
-    Founder, SalesMatter
-    carl@salesmatter.co.za
-    +27 74 172 5891
-    === END REFERENCE EXAMPLE ===
-    `;
+    // Load the email template from file (single source of truth)
+    const referenceTemplate = loadEmailTemplate();
 
     const customFieldsText = Object.entries(lead.customFields || {})
         .filter(([_, v]) => v !== undefined && v !== null && v !== "")
@@ -63,10 +47,12 @@ export async function regenerateEmail(
 
     IMPORTANT TASK: You are REGENERATING an outreach email. You must provide a DIFFERENT variation with a fresh feel, while keeping the core structure, voice, and length similar to the previous iterations.
     
-    You MUST use the structural template from the example below as the SINGLE SOURCE OF TRUTH for the tone, cadence, and flow. 
+    You MUST use the following reference email as the SINGLE SOURCE OF TRUTH for the tone, cadence, flow, KPIs, and footer. 
     Adapt the specific details (like company names, research points, and target audience nuances) to fit the prospect's actual data and the research summary below.
     
-    ${REFERENCE_EXAMPLE}
+    === REFERENCE EMAIL (SINGLE SOURCE OF TRUTH) ===
+    ${referenceTemplate}
+    === END REFERENCE EMAIL ===
 
     ---
 
@@ -82,10 +68,7 @@ export async function regenerateEmail(
     ${researchSummary}
     
     Task: Write the subject line and body of the cold outreach email incorporating the research summary.
-    The email must end precisely with the signature:
-    Carl Davis
-    Founder, SalesMatter
-    carl@salesmatter.co.za
+    The email must mirror the KPIs (bullet-point metrics) and end with the EXACT same closing signature and footer as the reference email above.
     `;
 
     try {
