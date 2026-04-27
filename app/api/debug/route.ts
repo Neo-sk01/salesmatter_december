@@ -7,7 +7,7 @@ export async function GET() {
         env: {
             hasSupabaseUrl: !!process.env.SUPABASE_URL,
             hasSupabaseKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-            hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+            hasOpenRouterKey: !!process.env.OPENROUTER_API_KEY,
             supabaseUrlPrefix: process.env.SUPABASE_URL?.substring(0, 30) + "...",
         },
         supabase: null as any,

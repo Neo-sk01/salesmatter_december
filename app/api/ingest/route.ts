@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-        console.error("Missing OPENAI_API_KEY in /api/ingest");
+    if (!process.env.OPENROUTER_API_KEY) {
+        console.error("Missing OPENROUTER_API_KEY in /api/ingest");
         return errorResponse(
             "CONFIG_ERROR",
             "Server configuration error",
