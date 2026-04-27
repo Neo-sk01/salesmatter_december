@@ -1,125 +1,27 @@
-
-import { ChatOpenAI } from "@langchain/openai";
-import { ImportedLead } from "@/types";
-import { z } from "zod";
-import { CallbackHandler } from "@langfuse/langchain";
-import { getAiProvider } from "@/lib/actions/settings";
-import { loadEmailTemplate } from "@/lib/utils/email-template-loader";
+import { generateObject } from 'ai';
+import { z } from 'zod';
+import { ImportedLead } from '@/types';
+import { getModel } from '@/lib/ai/openrouter';
+import { parseAIError } from '@/lib/ai/errors';
+import { loadEmailTemplate } from '@/lib/utils/email-template-loader';
 
 export const emailSchema = z.object({
-    subject: z.string().describe("The subject line of the email"),
-    body: z.string().describe("The main body content of the email"),
+    subject: z.string().describe('The subject line of the email'),
+    body: z.string().describe('The main body content of the email'),
 });
-
-// Custom error class for OpenAI-specific errors
-export class OpenAIError extends Error {
-    code: string;
-    userMessage: string;
-    retryable: boolean;
-
-    constructor(code: string, userMessage: string, retryable: boolean = false) {
-        super(userMessage);
-        this.name = 'OpenAIError';
-        this.code = code;
-        this.userMessage = userMessage;
-        this.retryable = retryable;
-    }
-}
-
-// Parse OpenAI errors into user-friendly messages
-export function parseOpenAIError(error: any): OpenAIError {
-    const errorMessage = error?.message || error?.error?.message || '';
-    const errorCode = error?.code || error?.error?.code || '';
-    const errorType = error?.type || error?.error?.type || '';
-
-    // Quota exceeded
-    if (errorCode === 'insufficient_quota' || errorMessage.includes('exceeded your current quota')) {
-        return new OpenAIError(
-            'QUOTA_EXCEEDED',
-            'AI service quota exceeded. Please check your OpenAI billing or contact the administrator to add credits.',
-            false
-        );
-    }
-
-    // Rate limit
-    if (errorCode === 'rate_limit_exceeded' || errorType === 'rate_limit_exceeded' || errorMessage.includes('rate limit')) {
-        return new OpenAIError(
-            'RATE_LIMITED',
-            'Too many requests. Please wait a moment and try again.',
-            true
-        );
-    }
-
-    // Invalid API key
-    if (errorCode === 'invalid_api_key' || errorMessage.includes('Incorrect API key') || errorMessage.includes('invalid_api_key')) {
-        return new OpenAIError(
-            'INVALID_API_KEY',
-            'AI service configuration error. Please contact the administrator.',
-            false
-        );
-    }
-
-    // Context length exceeded
-    if (errorCode === 'context_length_exceeded' || errorMessage.includes('maximum context length')) {
-        return new OpenAIError(
-            'CONTEXT_TOO_LONG',
-            'The input is too long for the AI to process. Try with fewer leads or shorter content.',
-            false
-        );
-    }
-
-    // Server errors
-    if (errorMessage.includes('server_error') || errorMessage.includes('503') || errorMessage.includes('502')) {
-        return new OpenAIError(
-            'AI_SERVICE_DOWN',
-            'AI service is temporarily unavailable. Please try again in a few minutes.',
-            true
-        );
-    }
-
-    // Default/unknown error
-    return new OpenAIError(
-        'AI_ERROR',
-        'Failed to generate email. Please try again.',
-        true
-    );
-}
 
 export async function draftEmail(
     lead: ImportedLead,
     researchSummary: string,
     userPrompt: string,
-    isRegenerate: boolean = false
+    _isRegenerate: boolean = false,
 ) {
-    const handler = new CallbackHandler({
-        userId: "system",
-    });
-
-    const provider = await getAiProvider();
-
-    const gatewayConfig = provider === "gateway" ? {
-        baseURL: process.env.VERCEL_AI_GATEWAY_URL || "https://gateway.ai.vercel.com/v1/workspace/project/openai",
-        defaultHeaders: process.env.AI_GATEWAY_API_KEY ? {
-            "Authorization": `Bearer ${process.env.AI_GATEWAY_API_KEY}`
-        } : undefined
-    } : undefined;
-
-    const model = new ChatOpenAI({
-        modelName: "gpt-4o-mini",
-        temperature: 0.7,
-        callbacks: [handler],
-        ...(gatewayConfig && { configuration: gatewayConfig })
-    });
-
-    const structuredModel = model.withStructuredOutput(emailSchema);
-
-    // Load the email template from file (single source of truth)
     const referenceTemplate = loadEmailTemplate();
 
     const customFieldsText = Object.entries(lead.customFields || {})
-        .filter(([_, v]) => v !== undefined && v !== null && v !== "")
+        .filter(([_, v]) => v !== undefined && v !== null && v !== '')
         .map(([k, v]) => `- ${k}: ${v}`)
-        .join("\n    ");
+        .join('\n    ');
 
     const fullPrompt = `
     ${userPrompt}
@@ -130,27 +32,32 @@ export async function draftEmail(
     - Name: ${lead.firstName} ${lead.lastName}
     - Company: ${lead.company}
     - Role: ${lead.role}
-    ${lead.linkedinUrl ? `- LinkedIn: ${lead.linkedinUrl}` : ""}
-    ${lead.companyUrl ? `- Company Website: ${lead.companyUrl}` : ""}
-    ${customFieldsText ? customFieldsText : ""}
-    
+    ${lead.linkedinUrl ? `- LinkedIn: ${lead.linkedinUrl}` : ''}
+    ${lead.companyUrl ? `- Company Website: ${lead.companyUrl}` : ''}
+    ${customFieldsText ? customFieldsText : ''}
+
     Research Summary for Personalization:
     ${researchSummary}
-    
+
     Task: Write the subject line and body of the cold outreach email incorporating the research summary.
-    
+
     You MUST use the following reference email as the SINGLE SOURCE OF TRUTH for your structure, voice, tone, KPIs, and footer. Adapt the specific details (like the person's name, company, and research points) but mirror the layout, bullet-point KPIs, and closing signature EXACTLY:
-    
+
     === REFERENCE EMAIL (SINGLE SOURCE OF TRUTH) ===
     ${referenceTemplate}
     === END REFERENCE EMAIL ===
     `;
 
     try {
-        const result = await structuredModel.invoke(fullPrompt);
-        return result;
-    } catch (error: any) {
-        console.error("OpenAI API error:", error);
-        throw parseOpenAIError(error);
+        const { object } = await generateObject({
+            model: getModel('drafting'),
+            schema: emailSchema,
+            prompt: fullPrompt,
+            temperature: 0.7,
+        });
+        return object;
+    } catch (error) {
+        console.error('AI drafting error:', error);
+        throw parseAIError(error);
     }
 }

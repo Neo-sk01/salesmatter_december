@@ -1,9 +1,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { researchLead } from "@/lib/agents/research-agent";
-import { draftEmail, OpenAIError } from "@/lib/agents/drafting-agent";
+import { draftEmail } from "@/lib/agents/drafting-agent";
+import { AIError } from "@/lib/ai/errors";
 import { regenerateEmail } from "@/lib/agents/regeneration-agent";
-import { sendEmail } from "@/lib/services/everlytic";
 import { ImportedLead } from "@/types";
 import { createClient } from "@supabase/supabase-js";
 
@@ -17,7 +17,7 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { leads, promptTemplate, sendImmediately = false, isRegenerate = false } = await req.json();
+        const { leads, promptTemplate, isRegenerate = false } = await req.json();
 
         if (!leads || !Array.isArray(leads)) {
             return NextResponse.json(
@@ -40,19 +40,7 @@ export async function POST(req: NextRequest) {
                         ? await regenerateEmail(lead, summary, promptTemplate)
                         : await draftEmail(lead, summary, promptTemplate);
 
-                    // 3. Send (if requested)
-                    let sendResult = null;
-                    if (sendImmediately) {
-                        sendResult = await sendEmail({
-                            to: lead.email,
-                            subject: draft.subject,
-                            body: draft.body,
-                        });
-                    }
-
-                    const status = sendImmediately
-                        ? (sendResult?.success ? "sent" : "failed")
-                        : "drafted";
+                    const status = "drafted";
 
                     // Save to DB
                     const supabase = getSupabase();
@@ -74,7 +62,7 @@ export async function POST(req: NextRequest) {
                             body: draft.body,
                             status: status,
                             research_summary: researchPayload,
-                            sent_at: sendImmediately && sendResult?.success ? new Date().toISOString() : null
+                            sent_at: null
                         })
                         .select()
                         .single();
@@ -93,13 +81,12 @@ export async function POST(req: NextRequest) {
                         body: draft.body,
                         status: status,
                         researchSummary: researchPayload, // Return full payload so sources are available immediately
-                        sendResult: sendResult,
                     };
                 } catch (err: any) {
                     console.error(`Failed to process lead ${lead.id}:`, err);
 
                     // Check if it's an OpenAI-specific error
-                    if (err instanceof OpenAIError) {
+                    if (err instanceof AIError) {
                         return {
                             leadId: lead.id,
                             status: "failed",
@@ -137,7 +124,7 @@ export async function POST(req: NextRequest) {
         console.error("Error generating drafts:", error);
 
         // Handle OpenAI errors at the top level too
-        if (error instanceof OpenAIError) {
+        if (error instanceof AIError) {
             return NextResponse.json({
                 error: error.userMessage,
                 errorCode: error.code,
