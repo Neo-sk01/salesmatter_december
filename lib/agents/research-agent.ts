@@ -1,7 +1,7 @@
-import OpenAI from "openai";
-import { TavilySearch } from "@langchain/tavily";
-import { ImportedLead } from "@/types";
-import { getAiProvider } from "@/lib/actions/settings";
+import { generateText } from 'ai';
+import { TavilySearch } from '@langchain/tavily';
+import { ImportedLead } from '@/types';
+import { getModel } from '@/lib/ai/openrouter';
 
 export interface ResearchResult {
     summary: string;
@@ -9,40 +9,19 @@ export interface ResearchResult {
 }
 
 export async function researchLead(lead: ImportedLead): Promise<ResearchResult> {
-    const provider = await getAiProvider();
-
-    const gatewayOptions = provider === "gateway" ? {
-        baseURL: process.env.VERCEL_AI_GATEWAY_URL || "https://gateway.ai.vercel.com/v1/workspace/project/openai",
-        defaultHeaders: process.env.AI_GATEWAY_API_KEY ? {
-            "Authorization": `Bearer ${process.env.AI_GATEWAY_API_KEY}`
-        } : undefined
-    } : {};
-
-    const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-        ...gatewayOptions
-    });
-
     const tavilyApiKey = process.env.TAVILY_API_KEY;
     if (!tavilyApiKey) {
-        throw new Error("TAVILY_API_KEY not found in environment");
+        throw new Error('TAVILY_API_KEY not found in environment');
     }
 
-    // Build context strings for the prompt
-    const linkedinContext = lead.linkedinUrl
-        ? `- LinkedIn Profile: ${lead.linkedinUrl}`
-        : "";
-
-    const companyUrlContext = lead.companyUrl
-        ? `- Company Website: ${lead.companyUrl}`
-        : "";
+    const linkedinContext = lead.linkedinUrl ? `- LinkedIn Profile: ${lead.linkedinUrl}` : '';
+    const companyUrlContext = lead.companyUrl ? `- Company Website: ${lead.companyUrl}` : '';
 
     const customFieldsText = Object.entries(lead.customFields || {})
-        .filter(([_, v]) => v !== undefined && v !== null && v !== "")
+        .filter(([_, v]) => v !== undefined && v !== null && v !== '')
         .map(([k, v]) => `- ${k}: ${v}`)
-        .join("\n");
+        .join('\n');
 
-    // Build search queries for Tavily
     const searchQueries: string[] = [
         `${lead.company} company news announcements`,
         `${lead.firstName} ${lead.lastName} ${lead.company} ${lead.role}`,
@@ -56,17 +35,15 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
         searchQueries.push(`${lead.firstName} ${lead.lastName} LinkedIn professional`);
     }
 
-    console.log("Using Tavily search with queries:");
+    console.log('Using Tavily search with queries:');
     searchQueries.forEach((q, i) => console.log(`  ${i + 1}. ${q}`));
 
     try {
-        // Initialize Tavily search tool
         const searchTool = new TavilySearch({
             tavilyApiKey: tavilyApiKey,
             maxResults: 5,
         });
 
-        // Perform searches and collect results
         const allResults: { title: string; url: string; content: string }[] = [];
         const sources: { title: string; url: string }[] = [];
 
@@ -74,27 +51,24 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
             try {
                 const result = await searchTool.invoke({ query });
 
-                // Parse the result (Tavily returns a JSON string)
                 let parsedResult;
-                if (typeof result === "string") {
+                if (typeof result === 'string') {
                     try {
                         parsedResult = JSON.parse(result);
                     } catch {
-                        // If parsing fails, use the raw string
-                        allResults.push({ title: query, url: "", content: result });
+                        allResults.push({ title: query, url: '', content: result });
                         continue;
                     }
                 } else {
                     parsedResult = result;
                 }
 
-                // Extract results from Tavily response
                 if (Array.isArray(parsedResult)) {
                     for (const item of parsedResult) {
                         allResults.push({
-                            title: item.title || "",
-                            url: item.url || "",
-                            content: item.content || item.snippet || "",
+                            title: item.title || '',
+                            url: item.url || '',
+                            content: item.content || item.snippet || '',
                         });
                         if (item.url) {
                             sources.push({
@@ -106,9 +80,9 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
                 } else if (parsedResult.results && Array.isArray(parsedResult.results)) {
                     for (const item of parsedResult.results) {
                         allResults.push({
-                            title: item.title || "",
-                            url: item.url || "",
-                            content: item.content || item.snippet || "",
+                            title: item.title || '',
+                            url: item.url || '',
+                            content: item.content || item.snippet || '',
                         });
                         if (item.url) {
                             sources.push({
@@ -119,9 +93,15 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
                     }
                 }
             } catch (searchError: any) {
-                console.warn(`Search query failed: ${query} - ${searchError?.statusText || searchError?.message || 'Unknown error'}`);
-                if (searchError?.status === 429 || searchError?.statusText === 'Too Many Requests' || searchError?.message?.includes('429')) {
-                    console.log("Tavily rate limit reached. Stopping further queries.");
+                console.warn(
+                    `Search query failed: ${query} - ${searchError?.statusText || searchError?.message || 'Unknown error'}`,
+                );
+                if (
+                    searchError?.status === 429 ||
+                    searchError?.statusText === 'Too Many Requests' ||
+                    searchError?.message?.includes('429')
+                ) {
+                    console.log('Tavily rate limit reached. Stopping further queries.');
                     break;
                 }
             }
@@ -130,20 +110,17 @@ export async function researchLead(lead: ImportedLead): Promise<ResearchResult> 
         console.log(`Tavily search completed. Found ${allResults.length} results from ${sources.length} sources`);
 
         if (allResults.length === 0) {
-            throw new Error("No search results found from any query.");
+            throw new Error('No search results found from any query.');
         }
 
-        // Deduplicate sources by URL
         const uniqueSources = sources.filter(
-            (source, index, self) => index === self.findIndex((s) => s.url === source.url)
+            (source, index, self) => index === self.findIndex((s) => s.url === source.url),
         );
 
-        // Compile search results into context for GPT
         const searchContext = allResults
             .map((r) => `[${r.title}]\n${r.content}`)
-            .join("\n\n---\n\n");
+            .join('\n\n---\n\n');
 
-        // Use GPT-4o-mini to summarize the search results
         const summaryPrompt = `
 You are a researcher preparing context for cold outreach. Based on the web search results provided, write a focused summary.
 
@@ -156,7 +133,7 @@ ${companyUrlContext}
 ${customFieldsText}
 
 WEB SEARCH RESULTS:
-${searchContext || "No search results found."}
+${searchContext || 'No search results found.'}
 
 Write a focused 150-word summary that includes:
 - Recent company news, announcements, or achievements
@@ -168,63 +145,51 @@ Be factual and specific. Only include information that appears in the search res
 If no relevant information was found, state that clearly and provide general context based on the role/industry.
 `;
 
-        const summaryResponse = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+        const { text: summary } = await generateText({
+            model: getModel('research'),
+            prompt: summaryPrompt,
             temperature: 0.3,
-            messages: [
-                {
-                    role: "user",
-                    content: summaryPrompt,
-                },
-            ],
         });
 
-        const summary = summaryResponse.choices[0]?.message?.content || "No summary generated";
-
-        console.log("Tavily research completed successfully");
+        console.log('Tavily research completed successfully');
 
         return {
-            summary,
+            summary: summary || 'No summary generated',
             sources: uniqueSources,
         };
     } catch (error) {
-        console.error("Tavily search failed:", error);
+        console.error('Tavily search failed:', error);
+        console.log('Falling back to basic research summary without web search');
 
-        // Fallback to basic completion without web search
-        console.log("Falling back to basic GPT-4o-mini without web search");
+        const fallbackPrompt = `
+You are a researcher preparing context for cold outreach.
 
-        const fallbackResponse = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+Prospect:
+- Name: ${lead.firstName} ${lead.lastName}
+- Company: ${lead.company}
+- Role: ${lead.role}
+${linkedinContext}
+${companyUrlContext}
+${customFieldsText}
+
+Task: Write a focused 150-word summary of this person/company based on your knowledge.
+Focus on:
+- Known information about the company
+- Industry context and typical roles
+- Anything that could serve as a conversation hook
+
+Be factual and specific where possible. If you don't have specific information,
+focus on general industry knowledge that might be relevant.
+`;
+
+        const { text: fallbackSummary } = await generateText({
+            model: getModel('research'),
+            prompt: fallbackPrompt,
             temperature: 0,
-            messages: [
-                {
-                    role: "user",
-                    content: `
-                        You are a researcher preparing context for cold outreach.
-
-                        Prospect:
-                        - Name: ${lead.firstName} ${lead.lastName}
-                        - Company: ${lead.company}
-                        - Role: ${lead.role}
-                        ${linkedinContext}
-                        ${companyUrlContext}
-                        ${customFieldsText}
-                        
-                        Task: Write a focused 150-word summary of this person/company based on your knowledge.
-                        Focus on:
-                        - Known information about the company
-                        - Industry context and typical roles
-                        - Anything that could serve as a conversation hook
-                        
-                        Be factual and specific where possible. If you don't have specific information,
-                        focus on general industry knowledge that might be relevant.
-                    `,
-                },
-            ],
         });
 
         return {
-            summary: fallbackResponse.choices[0]?.message?.content || "No summary generated",
+            summary: fallbackSummary || 'No summary generated',
             sources: [],
         };
     }
