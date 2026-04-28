@@ -20,10 +20,10 @@ export async function clearDatabase() {
 
   try {
     // Delete all records by filtering where a primary key exists / is not null
-    await supabase.from('email_events').delete().not('id', 'is', null);
-    await supabase.from('email_messages').delete().not('message_id', 'is', null);
+    await supabase.from('instantly_events').delete().not('id', 'is', null);
+    await supabase.from('instantly_messages').delete().not('campaign_id', 'is', null);
     await supabase.from('processed_files').delete().not('id', 'is', null);
-    
+
     // Attempt to clear leads if the table exists
     const { error } = await supabase.from('leads').delete().not('id', 'is', null);
     if (error && error.code !== '42P01') { 

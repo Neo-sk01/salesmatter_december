@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react"
 import type { EmailDraft, ImportedLead, OutreachBatch, EmailMetrics, DailyMetric, RecentSentEmail } from "@/types"
-import { getAnalyticsData } from "@/app/actions/get-analytics"
+import { getAnalyticsData } from "@/app/actions/get-instantly-analytics"
 
 const DEFAULT_PROMPT_TEMPLATE = `You are an expert sales copywriter following the Carl Davis XYZ Formula for cold outreach. Every email must follow a 6-component messaging structure designed for natural, conversational, high-converting cold outreach. No exceptions.
 
@@ -152,8 +152,6 @@ interface OutreachContextType {
     setDailyMetrics: (metrics: DailyMetric[]) => void
     showOnboarding: boolean
     setShowOnboarding: (show: boolean) => void
-    exportDraftsForReview: (recipientEmail: string, draftIds?: string[]) => Promise<{ success: boolean; message?: string; error?: string }>
-    isExporting: boolean
     // Loading states
     isLoadingDrafts: boolean
     isLoadingAnalytics: boolean
@@ -296,7 +294,6 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         }
     }, [])
 
-    // Fetch analytics with proper error handling
     const fetchAnalytics = useCallback(async () => {
         setIsLoadingAnalytics(true)
         setAnalyticsError(null)
@@ -307,7 +304,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             setDailyMetrics(data.dailyMetrics)
             setRecentSentEmails(data.recentSentEmails || [])
             setAnalyticsError(null)
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Error loading analytics:", error)
             setAnalyticsError(parseError(error, 'Failed to load analytics'))
         } finally {
@@ -469,6 +466,9 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
                         email: draft.lead.email,
                         subject: draft.subject,
                         body: draft.body,
+                        firstName: draft.lead.firstName,
+                        lastName: draft.lead.lastName,
+                        companyName: draft.lead.company,
                     }]
                 }),
             })
@@ -498,6 +498,9 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             email: d.lead.email,
             subject: d.subject,
             body: d.body,
+            firstName: d.lead.firstName,
+            lastName: d.lead.lastName,
+            companyName: d.lead.company,
         }))
 
         try {
@@ -583,47 +586,6 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
     const [regeneratingDraftId, setRegeneratingDraftId] = useState<string | null>(null)
     const [isRegeneratingAll, setIsRegeneratingAll] = useState(false)
     const [regeneratingAllProgress, setRegeneratingAllProgress] = useState<{ current: number; total: number } | null>(null)
-    const [isExporting, setIsExporting] = useState(false)
-
-    const exportDraftsForReview = useCallback(async (
-        recipientEmail: string,
-        draftIds?: string[]
-    ): Promise<{ success: boolean; message?: string; error?: string }> => {
-        // Get drafts to export (either specified IDs or all pending drafts)
-        const draftsToExport = draftIds
-            ? drafts.filter(d => draftIds.includes(d.id))
-            : drafts.filter(d => d.status !== 'sent')
-
-        if (draftsToExport.length === 0) {
-            return { success: false, error: 'No drafts to export' }
-        }
-
-        setIsExporting(true)
-
-        try {
-            const response = await fetch('/api/export-drafts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    drafts: draftsToExport,
-                    recipientEmail,
-                }),
-            })
-
-            const result = await response.json()
-
-            if (!result.success) {
-                return { success: false, error: result.error }
-            }
-
-            return { success: true, message: result.message }
-        } catch (error: any) {
-            console.error('Failed to export drafts:', error)
-            return { success: false, error: error.message || 'Failed to export drafts' }
-        } finally {
-            setIsExporting(false)
-        }
-    }, [drafts])
 
     const regenerateDraft = useCallback(async (draftId: string) => {
         const draft = drafts.find((d) => d.id === draftId)
@@ -831,8 +793,6 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         setDailyMetrics,
         showOnboarding,
         setShowOnboarding,
-        exportDraftsForReview,
-        isExporting,
         // Loading states
         isLoadingDrafts,
         isLoadingAnalytics,

@@ -8,6 +8,7 @@ import { PromptTemplateModal } from "@/components/outreach/prompt-template-modal
 import { OnboardingGuide } from "@/components/onboarding-guide"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
+import { Reasoning, ReasoningTrigger } from "@/components/ai-elements/reasoning"
 import { useOutreach } from "@/hooks/use-outreach"
 import { ArrowRight, Sparkles, Loader2, Code2, Users, CheckCircle2 } from "lucide-react"
 import type { ImportedLead } from "@/types"
@@ -245,6 +246,14 @@ export default function LeadsPage() {
                     <span className="font-semibold">Pro tip:</span> Include <span className="font-medium">Company URL</span> and <span className="font-medium">LinkedIn Profile</span> columns in your CSV for significantly better research results. Our AI will search these sources directly to find the most relevant and personalized information for your outreach.
                   </div>
                 </div>
+
+                {isDrafting && (
+                  <div className="rounded-lg border border-border bg-card px-4 py-3">
+                    <Reasoning isStreaming={isDrafting} className="w-full">
+                      <ReasoningTrigger />
+                    </Reasoning>
+                  </div>
+                )}
 
                 <div className="flex justify-end pt-2">
                   <Button

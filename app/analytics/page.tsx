@@ -16,8 +16,6 @@ import {
   Bar,
   Legend,
 } from "recharts"
-import { WebhookStatusPill, WebhookStatusBanner } from "@/components/webhook-status-card"
-
 export default function AnalyticsPage() {
   const { metrics, dailyMetrics, drafts, recentSentEmails } = useOutreach()
 
@@ -69,7 +67,7 @@ export default function AnalyticsPage() {
   return (
     <DashboardShell>
       <div className="p-6 space-y-4">
-        {/* Header with compact status pill */}
+        {/* Header */}
         <div className="flex flex-row items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
@@ -77,11 +75,7 @@ export default function AnalyticsPage() {
               Track your email performance and optimize your outreach
             </p>
           </div>
-          <WebhookStatusPill />
         </div>
-
-        {/* Thin Status Banner */}
-        <WebhookStatusBanner />
 
         {/* Metric Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

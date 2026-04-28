@@ -25,8 +25,6 @@ export default function DraftsPage() {
     regenerateSelectedDrafts,
     isRegeneratingAll,
     regeneratingAllProgress,
-    exportDraftsForReview,
-    isExporting,
     // Loading and error states
     isLoadingDrafts,
     draftsError,
@@ -76,7 +74,7 @@ export default function DraftsPage() {
                 size="sm"
                 className="gap-2 bg-transparent text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                 onClick={regenerateAllDrafts}
-                disabled={isRegeneratingAll || isExporting}
+                disabled={isRegeneratingAll}
                 title="Regenerate all pending drafts with fresh research"
               >
                 {isRegeneratingAll ? (
@@ -143,8 +141,6 @@ export default function DraftsPage() {
                     onRegenerateSelected={regenerateSelectedDrafts}
                     regeneratingId={regeneratingDraftId}
                     isRegeneratingAll={isRegeneratingAll}
-                    onExport={exportDraftsForReview}
-                    isExporting={isExporting}
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-20 border border-dashed border-border rounded-xl bg-muted/20">

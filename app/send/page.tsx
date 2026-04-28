@@ -11,7 +11,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 
 export default function SendPage() {
-  const { drafts, updateDraft, sendEmail, sendBulk, deleteDraft, sendNewEmail, exportDraftsForReview, isExporting } = useOutreach()
+  const { drafts, updateDraft, sendEmail, sendBulk, deleteDraft, sendNewEmail } = useOutreach()
   const [lastSent, setLastSent] = useState<string | null>(null)
   const [isComposeOpen, setIsComposeOpen] = useState(false)
 
@@ -96,8 +96,6 @@ export default function SendPage() {
                   onSend={handleSendEmail}
                   onSendBulk={sendBulk}
                   onDelete={deleteDraft}
-                  onExport={exportDraftsForReview}
-                  isExporting={isExporting}
                 />
               </div>
             ) : (
