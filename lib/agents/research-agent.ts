@@ -2,6 +2,7 @@ import { generateText } from 'ai';
 import { TavilySearch } from '@langchain/tavily';
 import { ImportedLead } from '@/types';
 import { getModel } from '@/lib/ai/openrouter';
+import { parseAIError } from '@/lib/ai/errors';
 
 export interface ResearchResult {
     summary: string;
@@ -182,15 +183,20 @@ Be factual and specific where possible. If you don't have specific information,
 focus on general industry knowledge that might be relevant.
 `;
 
-        const { text: fallbackSummary } = await generateText({
-            model: getModel('research'),
-            prompt: fallbackPrompt,
-            temperature: 0,
-        });
+        try {
+            const { text: fallbackSummary } = await generateText({
+                model: getModel('research'),
+                prompt: fallbackPrompt,
+                temperature: 0,
+            });
 
-        return {
-            summary: fallbackSummary || 'No summary generated',
-            sources: [],
-        };
+            return {
+                summary: fallbackSummary || 'No summary generated',
+                sources: [],
+            };
+        } catch (fallbackError) {
+            console.error('Research fallback failed:', fallbackError);
+            throw parseAIError(fallbackError);
+        }
     }
 }
