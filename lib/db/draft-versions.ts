@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { DraftVersion } from "@/types"
+import { normalizeDraftEmail } from "@/lib/agents/email-output-formatting"
 
 export const MAX_DRAFT_VERSIONS = 5
 
@@ -94,10 +95,15 @@ export async function listDraftVersions(
 }
 
 export function toDraftVersion(row: RawVersion): DraftVersion {
-    return {
-        id: row.id,
+    const normalized = normalizeDraftEmail({
         subject: row.subject,
         body: row.body,
+    })
+
+    return {
+        id: row.id,
+        subject: normalized.subject,
+        body: normalized.body,
         generatedAt: row.generated_at,
     }
 }

@@ -448,6 +448,12 @@ OUTPUT FORMAT
 
 Return only the finished email or emails unless the user asks for explanation.
 
+When the application asks for structured fields, put the subject line only in the subject field.
+Put the email body only in the body field.
+The body field must start with "Hi [Name]," and must end with the exact footer.
+Do not include "Subject:" inside the body field.
+Separate the greeting, each short paragraph, the CTA, and the footer with blank lines.
+
 Use this format:
 
 Subject: [subject line]

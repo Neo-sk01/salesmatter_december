@@ -5,6 +5,7 @@ import { getDraftingModel } from '@/lib/ai/openrouter';
 import type { DraftingModelId } from '@/lib/ai/models';
 import { parseAIError } from '@/lib/ai/errors';
 import { loadColdEmailSkill } from './prompts/skill-loader';
+import { normalizeDraftEmail } from './email-output-formatting';
 
 export const emailSchema = z.object({
     subject: z.string().describe('The subject line of the email'),
@@ -58,7 +59,7 @@ export async function draftEmail(
             prompt: fullPrompt,
             temperature: 0.7,
         });
-        return object;
+        return normalizeDraftEmail(object);
     } catch (error) {
         console.error('AI drafting error:', error);
         throw parseAIError(error);

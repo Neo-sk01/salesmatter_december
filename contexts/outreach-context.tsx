@@ -10,8 +10,8 @@ import { DEFAULT_DRAFTING_MODEL, isDraftingModelId, type DraftingModelId } from 
 // Version history is now managed server-side by the email_draft_versions table.
 // The frontend just trusts whatever previousVersions arrive in API responses.
 
-const PROMPT_TEMPLATE_STORAGE_KEY = 'salesmatter_prompt_template_v8'
-const LEGACY_PROMPT_TEMPLATE_STORAGE_KEYS = ['salesmatter_prompt_template_v5', 'salesmatter_prompt_template_v6', 'salesmatter_prompt_template_v7']
+const PROMPT_TEMPLATE_STORAGE_KEY = 'salesmatter_prompt_template_v9'
+const LEGACY_PROMPT_TEMPLATE_STORAGE_KEYS = ['salesmatter_prompt_template_v5', 'salesmatter_prompt_template_v6', 'salesmatter_prompt_template_v7', 'salesmatter_prompt_template_v8']
 
 const INITIAL_METRICS: EmailMetrics = {
     sent: 0,

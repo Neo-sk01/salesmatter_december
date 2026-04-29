@@ -2,6 +2,7 @@
 import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import { MAX_DRAFT_VERSIONS, toDraftVersion } from "@/lib/db/draft-versions"
+import { normalizeDraftEmail } from "@/lib/agents/email-output-formatting"
 
 function getSupabase() {
     if (!process.env.SUPABASE_URL) {
@@ -63,10 +64,19 @@ export async function GET() {
             }
         }
 
-        const enriched = (drafts ?? []).map((d: any) => ({
-            ...d,
-            previous_versions: versionsByDraft[d.id] ?? [],
-        }))
+        const enriched = (drafts ?? []).map((d: any) => {
+            const normalized = normalizeDraftEmail({
+                subject: d.subject,
+                body: d.body,
+            })
+
+            return {
+                ...d,
+                subject: normalized.subject,
+                body: normalized.body,
+                previous_versions: versionsByDraft[d.id] ?? [],
+            }
+        })
 
         return NextResponse.json({ drafts: enriched })
     } catch (error: any) {

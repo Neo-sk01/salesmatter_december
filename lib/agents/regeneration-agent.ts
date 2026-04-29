@@ -4,6 +4,7 @@ import { getDraftingModel } from '@/lib/ai/openrouter';
 import type { DraftingModelId } from '@/lib/ai/models';
 import { parseAIError } from '@/lib/ai/errors';
 import { emailSchema } from './drafting-agent';
+import { normalizeDraftEmail } from './email-output-formatting';
 import { loadColdEmailSkill } from './prompts/skill-loader';
 
 export async function regenerateEmail(
@@ -56,7 +57,7 @@ export async function regenerateEmail(
             prompt: fullPrompt,
             temperature: 0.8,
         });
-        return object;
+        return normalizeDraftEmail(object);
     } catch (error) {
         console.error('AI regeneration error:', error);
         throw parseAIError(error);
