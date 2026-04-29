@@ -39,6 +39,13 @@ export type Workspace = {
   avatar?: string
 }
 
+export type DraftVersion = {
+  id: string
+  subject: string
+  body: string
+  generatedAt: string
+}
+
 export type EmailDraft = {
   id: string
   leadId: string
@@ -49,6 +56,7 @@ export type EmailDraft = {
   createdAt: string
   sentAt?: string
   researchSummary?: string
+  previousVersions?: DraftVersion[]
 }
 
 export type OutreachBatch = {
@@ -78,13 +86,25 @@ export type EmailMetrics = {
   sent: number
   delivered: number
   opened: number
+  uniqueOpened: number
   clicked: number
+  uniqueClicked: number
   replied: number
+  uniqueReplied: number
   bounced: number
+  unsubscribed: number
+  newLeadsContacted: number
+  totalOpportunities: number
+  opportunityValue: number
+  interested: number
+  meetingsBooked: number
+  meetingsCompleted: number
+  closed: number
   openRate: number
   clickRate: number
   replyRate: number
   bounceRate: number
+  unsubscribeRate: number
 }
 
 export type DailyMetric = {

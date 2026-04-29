@@ -1,4 +1,12 @@
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import {
+  DRAFTING_MODEL_OPTIONS,
+  MODELS,
+  type AgentRole,
+  type DraftingModelId,
+} from './models';
+
+export type { AgentRole };
 
 if (!process.env.OPENROUTER_API_KEY) {
   console.warn(
@@ -10,13 +18,16 @@ const openrouter = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY ?? '',
 });
 
-export type AgentRole = 'mapping' | 'research' | 'drafting' | 'regeneration';
-
-const MODELS: Record<AgentRole, string> = {
-  mapping: 'openai/gpt-4o-mini',
-  research: 'openai/gpt-4o-mini',
-  drafting: 'deepseek/deepseek-v3.2',
-  regeneration: 'deepseek/deepseek-v3.2',
-};
-
 export const getModel = (role: AgentRole) => openrouter(MODELS[role]);
+
+/**
+ * Resolve a user-selected drafting model id (from the dashboard toggle) to an
+ * OpenRouter model instance. Falls back to the registered drafting/regeneration
+ * model when the id is missing or unknown.
+ */
+export const getDraftingModel = (id: DraftingModelId | undefined, role: 'drafting' | 'regeneration' = 'drafting') => {
+  if (id && DRAFTING_MODEL_OPTIONS[id]) {
+    return openrouter(DRAFTING_MODEL_OPTIONS[id].slug);
+  }
+  return openrouter(MODELS[role]);
+};

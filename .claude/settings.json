@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"console.log\\(typeof require\\('@langchain/tavily'\\).TavilySearch\\)\")",
+      "Bash(git stash *)",
+      "Bash(git checkout *)",
+      "Bash(node -e ' *)",
+      "Bash(npx ai-elements@latest add reasoning)",
+      "Bash(lsof -i :3000 -i :3001 -i :3002 -sTCP:LISTEN)",
+      "Bash(ps -eo pid,ppid,etime,command)",
+      "Bash(git push *)",
+      "mcp__plugin_playwright_playwright__browser_console_messages",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(awk '/^const DEFAULT_PROMPT_TEMPLATE = `/{flag=1; sub\\(/^const DEFAULT_PROMPT_TEMPLATE = `/,\"\"\\); print; next} flag{if\\(/`;$/\\){sub\\(/`;$/,\"\"\\); print; flag=0; exit} print}' /Users/neosekaleli/Desktop/Developer/salesmatter_december-1/contexts/outreach-context.tsx)",
+      "Read(//tmp/**)",
+      "Bash(grep -n \"^const DEFAULT_PROMPT_TEMPLATE = \\\\`\\\\|^This SKILL.md is the single source\\\\`;\" /Users/neosekaleli/Desktop/Developer/salesmatter_december-1/contexts/outreach-context.tsx)",
+      "Bash(sed -i '' '13,205d' /Users/neosekaleli/Desktop/Developer/salesmatter_december-1/contexts/outreach-context.tsx)",
+      "Bash(sed -n '10,18p' /Users/neosekaleli/Desktop/Developer/salesmatter_december-1/contexts/outreach-context.tsx)",
+      "Bash(bun run *)",
+      "WebFetch(domain:developer.instantly.ai)",
+      "mcp__plugin_supabase_supabase__list_projects",
+      "mcp__plugin_supabase_supabase__apply_migration",
+      "Bash(bun -e ' *)"
+    ]
+  }
+}

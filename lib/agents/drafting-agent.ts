@@ -1,9 +1,10 @@
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { ImportedLead } from '@/types';
-import { getModel } from '@/lib/ai/openrouter';
+import { getDraftingModel } from '@/lib/ai/openrouter';
+import type { DraftingModelId } from '@/lib/ai/models';
 import { parseAIError } from '@/lib/ai/errors';
-import { loadEmailTemplate } from '@/lib/utils/email-template-loader';
+import { loadColdEmailSkill } from './prompts/skill-loader';
 
 export const emailSchema = z.object({
     subject: z.string().describe('The subject line of the email'),
@@ -15,20 +16,27 @@ export async function draftEmail(
     researchSummary: string,
     userPrompt: string,
     _isRegenerate: boolean = false,
+    modelId?: DraftingModelId,
 ) {
-    const referenceTemplate = loadEmailTemplate();
+    const systemPrompt = loadColdEmailSkill();
 
     const customFieldsText = Object.entries(lead.customFields || {})
         .filter(([_, v]) => v !== undefined && v !== null && v !== '')
         .map(([k, v]) => `- ${k}: ${v}`)
         .join('\n    ');
 
+    // Only inject operator instructions when they actually differ from the
+    // system prompt. The UI's default template mirrors cold-email-skill.md,
+    // so without this guard the same content would be sent twice — and a
+    // stale localStorage copy would contradict the fresh system prompt.
+    const trimmedUserPrompt = userPrompt?.trim() ?? '';
+    const operatorBlock =
+        trimmedUserPrompt && trimmedUserPrompt !== systemPrompt.trim()
+            ? `Operator-level instructions for this batch:\n    ${userPrompt}\n\n    ---\n\n    `
+            : '';
+
     const fullPrompt = `
-    ${userPrompt}
-
-    ---
-
-    Prospect Details:
+    ${operatorBlock}Prospect Details:
     - Name: ${lead.firstName} ${lead.lastName}
     - Company: ${lead.company}
     - Role: ${lead.role}
@@ -39,18 +47,13 @@ export async function draftEmail(
     Research Summary for Personalization:
     ${researchSummary}
 
-    Task: Write the subject line and body of the cold outreach email incorporating the research summary.
-
-    You MUST use the following reference email as the SINGLE SOURCE OF TRUTH for your structure, voice, tone, KPIs, and footer. Adapt the specific details (like the person's name, company, and research points) but mirror the layout, bullet-point KPIs, and closing signature EXACTLY:
-
-    === REFERENCE EMAIL (SINGLE SOURCE OF TRUTH) ===
-    ${referenceTemplate}
-    === END REFERENCE EMAIL ===
+    Task: Write the subject line and body of the cold outreach email for this prospect, strictly following the formula in the system prompt. Pull personalization details from the research summary above.
     `;
 
     try {
         const { object } = await generateObject({
-            model: getModel('drafting'),
+            model: getDraftingModel(modelId, 'drafting'),
+            system: systemPrompt,
             schema: emailSchema,
             prompt: fullPrompt,
             temperature: 0.7,

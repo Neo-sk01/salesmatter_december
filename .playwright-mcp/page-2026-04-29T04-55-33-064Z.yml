@@ -1,0 +1,586 @@
+- generic:
+  - generic:
+    - complementary:
+      - generic:
+        - img
+      - navigation:
+        - list:
+          - listitem:
+            - link:
+              - /url: /dashboard
+              - img
+              - generic: Leads
+          - listitem:
+            - link:
+              - /url: /files
+              - img
+              - generic: Files
+          - listitem:
+            - link:
+              - /url: /drafts
+              - img
+              - generic: Drafts
+              - generic: "11"
+          - listitem:
+            - link:
+              - /url: /send
+              - img
+              - generic: Send
+          - listitem:
+            - link:
+              - /url: /analytics
+              - img
+              - generic: Analytics
+          - listitem:
+            - link:
+              - /url: /settings
+              - img
+              - generic: Settings
+      - generic:
+        - button:
+          - generic:
+            - generic: BM
+          - generic:
+            - paragraph: Burn Media Group
+          - img
+    - main:
+      - generic:
+        - generic:
+          - generic:
+            - heading [level=1]: Email Drafts
+            - paragraph: 11 drafts pending
+          - generic:
+            - generic:
+              - img
+              - combobox:
+                - generic:
+                  - generic:
+                    - generic: DeepSeek 3.7
+                    - generic: deepseek/deepseek-v3.2
+                - img
+            - button:
+              - img
+              - text: Select from Files
+            - button:
+              - img
+              - text: View Prompt
+            - button:
+              - img
+              - text: Regenerate All
+            - button:
+              - img
+              - text: Clear Drafts
+            - link:
+              - /url: /send
+              - button:
+                - text: Ready to Send
+                - img
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - img
+                  - textbox:
+                    - /placeholder: Search leads, companies, or subjects...
+                - generic:
+                  - combobox:
+                    - generic: All Status
+                    - img
+                  - combobox:
+                    - generic: Newest First
+                    - img
+              - generic:
+                - generic:
+                  - generic:
+                    - button:
+                      - img
+                      - text: Select All
+                  - generic:
+                    - button [disabled]:
+                      - img
+                      - text: Send Selected
+              - generic:
+                - generic:
+                  - heading [level=3]:
+                    - button [expanded]:
+                      - generic:
+                        - heading [level=3]: Today
+                        - generic: "11"
+                      - img
+                  - region:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Peter O’Toole peter.otoole@cellulant.io
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: "Cellulant: (Pan-African)"
+                                - generic:
+                                  - img
+                                  - text: Group CEO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: peter.otoole@cellulant.io
+                            - generic:
+                              - button [expanded]:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button [expanded]:
+                                - img
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Current Draft
+                                - generic: Generated Apr 29, 6:50 AM
+                              - generic:
+                                - paragraph: Subject
+                                - paragraph: Outmax for Cellulant
+                              - generic:
+                                - paragraph: Body
+                                - paragraph: Hi Peter, I saw Cellulant's Ghana PSP licence and Freddie Oduro's appointment to grow enterprise payments there. That feels like a point where media accountability needs to match market ambition. We work with Pan-African growth teams managing paid media across fragmented channels. The difficult part is knowing which markets and channels deserve the next rand while campaigns are live. Perion's Outmax, brought into African markets through Mediamark and McSorely Media, helps optimise pacing and spend allocation in real time against brand defined outcomes. Perion positions Outmax around up to 40 percent efficiency, in a market forecast to reach 6.5 billion dollars by 2029 at 15.3 percent CAGR. Would it be worth comparing this against Cellulant's media priorities? Best regards, Carl Davis Founder, SalesMatter carl@salesmatter.co.za +27 74 172 5891
+                              - generic: No previous drafts yet. Regenerate this email to create a version history.
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Dewald Potgieter dewald@flutterwave.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: "Flutterwave: (Pan-African)"
+                                - generic:
+                                  - img
+                                  - text: VP President of Sales
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: dewald@flutterwave.com
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for Flutterwave
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Andrew Watkins-Ball andrew.watkins-ball@jumo.world
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Jumo (Pan-African)
+                                - generic:
+                                  - img
+                                  - text: Founder & Group CEO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: andrew.watkins-ball@jumo.world
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for Jumo
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Tom Stuart tom@lula.co.za
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Lulalend - 1
+                                - generic:
+                                  - img
+                                  - text: CMO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: tom@lula.co.za
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for Lula launch
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Sean Emery sean.e@rainfin.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Rainfin - 1
+                                - generic:
+                                  - img
+                                  - text: CEO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: sean.e@rainfin.com
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for RainFin
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Lucia Malapane lmalapane@tymebank.co.za.
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: TymeBank
+                                - generic:
+                                  - img
+                                  - text: Senior Marketing Manager
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: lmalapane@tymebank.co.za.
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for TymeBank
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Sean Emery sean.emery@rainfin.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Rainfin - 2
+                                - generic:
+                                  - img
+                                  - text: CEO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: sean.emery@rainfin.com
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for RainFin
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Michael Thomson michael@snapscan.co.za
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: SnapScan
+                                - generic:
+                                  - img
+                                  - text: Head of Marketing at Snapscan
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: michael@snapscan.co.za
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for SnapScan
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Shaylen Padayachee shaylenp@ozow.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Ozow
+                                - generic:
+                                  - img
+                                  - text: Head of Marketing at Ozow
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: shaylenp@ozow.com
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for Ozow
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Jessica Fowlds Jessica.fowlds@zapper.co.za
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Zapper
+                                - generic:
+                                  - img
+                                  - text: Head of Marketing & Comms
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: jessica.fowlds@zapper.co.za
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for Zapper
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Alex von Schirmeister alexvon.schirmeister@xero.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 6:50 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Xero
+                                - generic:
+                                  - img
+                                  - text: MD UK & Africa
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: alexvon.schirmeister@xero.com
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for Xero Africa
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e91] [cursor=pointer]:
+    - img [ref=e92]
+  - alert
+  - dialog "Lead Research Summary" [ref=e544]:
+    - generic [ref=e545]:
+      - heading "Lead Research Summary" [level=2] [ref=e546]:
+        - img [ref=e547]
+        - text: Lead Research Summary
+      - paragraph [ref=e549]: AI-generated research summary using Tavily web search
+    - generic [ref=e550]:
+      - generic [ref=e551]:
+        - heading "Lead Details" [level=3] [ref=e552]
+        - generic [ref=e553]:
+          - generic [ref=e554]:
+            - img [ref=e555]
+            - generic [ref=e558]: Peter O’Toole peter.otoole@cellulant.io
+          - generic [ref=e559]:
+            - img [ref=e560]
+            - generic [ref=e563]: peter.otoole@cellulant.io
+          - generic [ref=e564]:
+            - img [ref=e565]
+            - generic [ref=e569]: "Cellulant: (Pan-African)"
+          - generic [ref=e570]:
+            - img [ref=e571]
+            - generic [ref=e574]: Group CEO
+      - separator [ref=e575]
+      - generic [ref=e576]:
+        - heading "Research Summary" [level=3] [ref=e577]
+        - paragraph [ref=e579]: Peter O'Toole is the Group CEO of Cellulant, a leading Pan-African payments company, having been appointed in June 2023 after serving as Acting CEO and CFO. Under his leadership, Cellulant has been actively expanding its operations, recently acquiring a Payment Service Provider (PSP) license in Ghana to enhance its digital payment solutions for businesses. The company aims to deepen its presence in key markets, exemplified by the appointment of Freddie Oduro as Country Manager for Ghana, focusing on enterprise payments growth. Cellulant is committed to providing secure and innovative payment solutions across various sectors, including e-commerce and utilities. With over 30 years of experience in finance and payments, O'Toole's expertise positions him as a thought leader in the industry, making him a valuable contact for discussions on digital payment innovations and market expansion strategies in Africa.
+      - separator [ref=e580]
+      - generic [ref=e581]:
+        - heading "Sources (10)" [level=3] [ref=e582]
+        - generic [ref=e583]:
+          - link "1. Pan African Payments Company Cellulant acquires PSP License in ..." [ref=e584] [cursor=pointer]:
+            - /url: https://www.cnbcafrica.com/2021/pan-african-payments-company-cellulant-acquires-psp-license-in-ghana-as-it-rolls-out-a-digital-payments-solution-for-businesses/
+          - link "2. Cellulant appoints new Country Manager to drive enterprise payments growth in Ghana" [ref=e585] [cursor=pointer]:
+            - /url: https://www.ghanaweb.com/blogs/mindofthewriter/Cellulant-appoints-new-Country-Manager-to-drive-enterprise-payments-growth-in-Ghana-14920
+          - link "3. Cellulant Archives - Fintech News Africa" [ref=e586] [cursor=pointer]:
+            - /url: https://fintechnews.africa/tag/cellulant/
+          - link "4. News Archives - Cellulant" [ref=e587] [cursor=pointer]:
+            - /url: https://www.cellulant.io/category/cellulant-news/news/
+          - link "5. Partnership Announcement Archives - Cellulant" [ref=e588] [cursor=pointer]:
+            - /url: https://www.cellulant.io/category/cellulant-news/partnership-announcement/
+          - link "6. Peter O'Toole - Group CEO at Cellulant - The Org" [ref=e589] [cursor=pointer]:
+            - /url: https://theorg.com/org/cellulant/org-chart/peter-otoole
+          - link "7. About Us - Cellulant | Leading payments company in Africa." [ref=e590] [cursor=pointer]:
+            - /url: https://www.cellulant.io/about-us/
+          - link "8. Cellulant appoints Peter O'Toole as acting CEO in leadership ..." [ref=e591] [cursor=pointer]:
+            - /url: https://swalanyeti.co.ke/business/article/7930/cellulant-appoints-peter-otoole-as-acting-ceo-in-leadership-transition
+          - link "9. Cellulant Welcomes Leading Executives from Payment Industry ..." [ref=e592] [cursor=pointer]:
+            - /url: https://news.frontierafricareports.com/article/cellulant-welcomes-leading-executives-from-payment
+          - link "10. Meet Peter O'Toole, the Acting Group CEO at Cellulant - TechMoran" [ref=e593] [cursor=pointer]:
+            - /url: https://techmoran.com/2024/01/05/meet-peter-otoole-the-acting-group-ceo-at-cellulant/
+    - button "Close" [active] [ref=e594]:
+      - img
+      - generic [ref=e595]: Close

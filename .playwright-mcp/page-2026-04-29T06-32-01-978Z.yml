@@ -1,0 +1,557 @@
+- generic:
+  - generic:
+    - complementary:
+      - generic:
+        - img
+      - navigation:
+        - list:
+          - listitem:
+            - link:
+              - /url: /dashboard
+              - img
+              - generic: Leads
+          - listitem:
+            - link:
+              - /url: /files
+              - img
+              - generic: Files
+          - listitem:
+            - link:
+              - /url: /drafts
+              - img
+              - generic: Drafts
+              - generic: "11"
+          - listitem:
+            - link:
+              - /url: /send
+              - img
+              - generic: Send
+          - listitem:
+            - link:
+              - /url: /analytics
+              - img
+              - generic: Analytics
+          - listitem:
+            - link:
+              - /url: /settings
+              - img
+              - generic: Settings
+      - generic:
+        - button:
+          - generic:
+            - generic: BM
+          - generic:
+            - paragraph: Burn Media Group
+          - img
+    - main:
+      - generic:
+        - generic:
+          - generic:
+            - heading [level=1]: Email Drafts
+            - paragraph: 11 drafts pending
+          - generic:
+            - generic:
+              - img
+              - combobox:
+                - generic:
+                  - generic:
+                    - generic: DeepSeek 3.7
+                    - generic: deepseek/deepseek-v3.2
+                - img
+            - button:
+              - img
+              - text: Select from Files
+            - button [expanded]:
+              - img
+              - text: View Prompt
+            - button:
+              - img
+              - text: Regenerate All
+            - button:
+              - img
+              - text: Clear Drafts
+            - link:
+              - /url: /send
+              - button:
+                - text: Ready to Send
+                - img
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - img
+                  - textbox:
+                    - /placeholder: Search leads, companies, or subjects...
+                - generic:
+                  - combobox:
+                    - generic: All Status
+                    - img
+                  - combobox:
+                    - generic: Newest First
+                    - img
+              - generic:
+                - generic:
+                  - generic:
+                    - button:
+                      - img
+                      - text: Select All
+                  - generic:
+                    - button [disabled]:
+                      - img
+                      - text: Send Selected
+              - generic:
+                - generic:
+                  - heading [level=3]:
+                    - button [expanded]:
+                      - generic:
+                        - heading [level=3]: Today
+                        - generic: "11"
+                      - img
+                  - region:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Sean Emery sean.e@rainfin.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:30 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Rainfin - 1
+                                - generic:
+                                  - img
+                                  - text: CEO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: sean.e@rainfin.com
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button [expanded]:
+                                - img
+                          - generic:
+                            - generic:
+                              - generic:
+                                - generic: Current Draft
+                                - generic: Generated Apr 29, 8:30 AM
+                              - generic:
+                                - paragraph: Subject
+                                - paragraph: Outmax for Rainfin
+                              - generic:
+                                - paragraph: Body
+                                - paragraph: Hi Sean, I noticed Rainfin's majority stake sale to LeBashe and the planned R1 billion SME fund. With Texmex piloting R40 million, it feels like growth media needs the same accountability as the credit marketplace. We work with African financial services and fintech teams spending across YouTube, Meta, TikTok, programmatic, display and video. The difficult part is that acquisition spend sits across too many platforms, and it is not always clear where the next rand should go while campaigns are live. Perion's Outmax, brought into African markets through Mediamark and McSorely Media, helps optimise pacing and spend allocation in real time against brand defined business outcomes, not only platform KPIs. Perion positions Outmax around up to 40 percent efficiency. Wepner delivered 96 percent YouTube completion and a 27 percent reduction in carbon intensity. Could it be worth looking at this in the context of Rainfin's next growth campaign? Best regards, Dewald Van Niekerk Head of Sales dewald.vanniekerk@mediamark.co.za
+                              - generic:
+                                - generic:
+                                  - button:
+                                    - generic:
+                                      - img
+                                      - text: Previous Drafts
+                                      - generic: "1"
+                                    - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Sean Emery sean.emery@rainfin.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:27 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Rainfin - 2
+                                - generic:
+                                  - img
+                                  - text: CEO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: sean.emery@rainfin.com
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Outmax for RainFin growth
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Dewald Potgieter dewald@flutterwave.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:17 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: "Flutterwave: (Pan-African)"
+                                - generic:
+                                  - img
+                                  - text: VP President of Sales
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: dewald@flutterwave.com
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Flutterwave’s next growth phase
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Tom Stuart tom@lula.co.za
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:17 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Lulalend - 1
+                                - generic:
+                                  - img
+                                  - text: CMO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: tom@lula.co.za
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Lula’s next growth phase
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Alex von Schirmeister alexvon.schirmeister@xero.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:17 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Xero
+                                - generic:
+                                  - img
+                                  - text: MD UK & Africa
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: alexvon.schirmeister@xero.com
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Supporting Xero’s UK & Africa growth
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Lucia Malapane lmalapane@tymebank.co.za.
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:17 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: TymeBank
+                                - generic:
+                                  - img
+                                  - text: Senior Marketing Manager
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: lmalapane@tymebank.co.za.
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: GoTyme Bank’s next growth phase
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Andrew Watkins-Ball andrew.watkins-ball@jumo.world
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:17 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Jumo (Pan-African)
+                                - generic:
+                                  - img
+                                  - text: Founder & Group CEO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: andrew.watkins-ball@jumo.world
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Jumo's next growth phase
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Michael Thomson michael@snapscan.co.za
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:17 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: SnapScan
+                                - generic:
+                                  - img
+                                  - text: Head of Marketing at Snapscan
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: michael@snapscan.co.za
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Data-led growth at SnapScan
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Shaylen Padayachee shaylenp@ozow.com
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:17 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Ozow
+                                - generic:
+                                  - img
+                                  - text: Head of Marketing at Ozow
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: shaylenp@ozow.com
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Ozow's SME partnership momentum
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Peter O’Toole peter.otoole@cellulant.io
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:17 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: "Cellulant: (Pan-African)"
+                                - generic:
+                                  - img
+                                  - text: Group CEO
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: peter.otoole@cellulant.io
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Supporting Cellulant’s next growth phase
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                        - generic:
+                          - generic:
+                            - checkbox
+                            - generic:
+                              - generic:
+                                - generic: Jessica Fowlds Jessica.fowlds@zapper.co.za
+                                - generic: Draft
+                                - generic:
+                                  - img
+                                  - text: 8:17 AM
+                              - generic:
+                                - generic:
+                                  - img
+                                  - text: Zapper
+                                - generic:
+                                  - img
+                                  - text: Head of Marketing & Comms
+                              - generic:
+                                - generic:
+                                  - img
+                                  - generic: jessica.fowlds@zapper.co.za
+                                - generic:
+                                  - generic: "Subject:"
+                                  - generic: Zapper V2 and SME growth
+                            - generic:
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+                              - button:
+                                - img
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e91] [cursor=pointer]:
+    - img [ref=e92]
+  - alert
+  - dialog "Cold Outreach Prompt" [ref=e535]:
+    - generic [ref=e536]:
+      - heading "Cold Outreach Prompt" [level=2] [ref=e537]:
+        - img [ref=e538]
+        - text: Cold Outreach Prompt
+      - paragraph [ref=e542]: This prompt is used to generate personalized cold emails for each lead. Customize it to match your tone and style.
+    - textbox "Enter your prompt template..." [active] [ref=e545]
+    - generic [ref=e546]:
+      - button "Reset to Default" [ref=e547]:
+        - img
+        - text: Reset to Default
+      - generic [ref=e548]:
+        - button "Cancel" [ref=e549]
+        - button "Save Changes" [ref=e550]
+    - button "Close" [ref=e551]:
+      - img
+      - generic [ref=e552]: Close

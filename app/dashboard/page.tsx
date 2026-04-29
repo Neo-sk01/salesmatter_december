@@ -9,14 +9,25 @@ import { OnboardingGuide } from "@/components/onboarding-guide"
 import { Button } from "@/components/ui/button"
 import { ErrorBanner } from "@/components/ui/error-banner"
 import { Reasoning, ReasoningTrigger } from "@/components/ai-elements/reasoning"
+import { Badge } from "@/components/ui/badge"
+import { DRAFTING_MODEL_OPTIONS } from "@/lib/ai/models"
 import { useOutreach } from "@/hooks/use-outreach"
-import { ArrowRight, Sparkles, Loader2, Code2, Users, CheckCircle2 } from "lucide-react"
+import { ArrowRight, Sparkles, Loader2, Code2, Users, CheckCircle2, Cpu } from "lucide-react"
 import type { ImportedLead } from "@/types"
 import Link from "next/link"
 import { toast } from "sonner"
 import { MappingResult } from "@/lib/agents/mapping-agent"
 
-// ... imports
+class ImportError extends Error {
+  description?: string
+  code?: string
+  constructor(message: string, description?: string, code?: string) {
+    super(message)
+    this.name = "ImportError"
+    this.description = description
+    this.code = code
+  }
+}
 
 export default function LeadsPage() {
   const {
@@ -25,6 +36,7 @@ export default function LeadsPage() {
     isDrafting,
     promptTemplate,
     setPromptTemplate,
+    selectedModel,
     importLeads,
     toggleLeadSelection,
     selectAllLeads,
@@ -49,89 +61,162 @@ export default function LeadsPage() {
         // 1. Ingest
         const formData = new FormData()
         formData.append("file", file)
-        const ingestRes = await fetch("/api/ingest", {
-          method: "POST",
-          body: formData,
-        })
-        if (ingestRes.ok) {
-          const result = await ingestRes.json()
 
-          if (result.fileId) {
-            // New flow: Server-side processed
-            setMappingStatus("Loading processed leads...")
-            const leadsRes = await fetch(`/api/files/${result.fileId}/leads`)
-            const { leads } = await leadsRes.json()
-
-            if (leads && leads.length > 0) {
-              const mappedLeads: ImportedLead[] = leads.map((l: any) => {
-                const { id, first_name, firstName, last_name, lastName, email, company, role, linkedin_url, linkedinUrl, company_url, companyUrl, created_at, updated_at, ...rest } = l;
-                return {
-                  id: l.id,
-                  firstName: l.first_name || l.firstName || "",
-                  lastName: l.last_name || l.lastName || "",
-                  email: l.email || "",
-                  company: l.company || "",
-                  role: l.role || "",
-                  linkedinUrl: l.linkedin_url || l.linkedinUrl || "",
-                  companyUrl: l.company_url || l.companyUrl || "",
-                  selected: true,
-                  customFields: rest,
-                };
-              })
-              importLeads(mappedLeads)
-              return
-            }
-          }
-
-          // Fallback to legacy client-side flow if data returned
-          const { data } = result
-          if (data && data.length > 0) {
-            // 2. Identify Columns
-            setMappingStatus("Identifying columns with AI...")
-            const headers = Object.keys(data[0])
-            const mapRes = await fetch("/api/map", {
-              method: "POST",
-              body: JSON.stringify({ headers, sampleRows: data.slice(0, 5) }),
-            })
-            const { mapping }: { mapping: MappingResult } = await mapRes.json()
-
-            // 3. Transform Data
-            setMappingStatus("Mapping data...")
-            const mappedLeads: ImportedLead[] = data.map((row: any, idx: number) => {
-              const mappedValues = new Set([
-                mapping.firstName, mapping.lastName, mapping.email, 
-                mapping.company, mapping.role, mapping.linkedin, mapping.companyUrl
-              ].filter(Boolean));
-              const customFields: Record<string, any> = {};
-              for (const [key, value] of Object.entries(row)) {
-                if (!mappedValues.has(key)) {
-                  customFields[key] = value;
-                }
-              }
-              
-              return {
-                id: `lead-${Date.now()}-${idx}`,
-                firstName: mapping.firstName ? (row[mapping.firstName] || "") : "",
-                lastName: mapping.lastName ? (row[mapping.lastName] || "") : "",
-                email: mapping.email ? (row[mapping.email] || "") : "",
-                company: mapping.company ? (row[mapping.company] || "") : "",
-                role: mapping.role ? (row[mapping.role] || "") : "",
-                linkedinUrl: mapping.linkedin ? (row[mapping.linkedin] || "") : "",
-                companyUrl: mapping.companyUrl ? (row[mapping.companyUrl] || "") : "",
-                selected: true,
-                customFields,
-              }
-            }).filter((l: ImportedLead) => l.email)
-
-            importLeads(mappedLeads)
-            return
-          }
+        let ingestRes: Response
+        try {
+          ingestRes = await fetch("/api/ingest", {
+            method: "POST",
+            body: formData,
+          })
+        } catch (networkErr) {
+          throw new ImportError(
+            "Couldn't reach the server",
+            "Check your internet connection and try again.",
+          )
         }
 
-        throw new Error("No data found in file")
+        // Server-side validation / parse / DB errors come through with structured shape
+        if (!ingestRes.ok) {
+          const payload = await ingestRes.json().catch(() => null)
+          const serverError = payload?.error
+          throw new ImportError(
+            serverError?.message || `Server returned ${ingestRes.status}`,
+            serverError?.details,
+            serverError?.code,
+          )
+        }
+
+        const result = await ingestRes.json()
+
+        // New flow: server stored leads, fetch them by fileId
+        if (result.fileId) {
+          setMappingStatus("Loading processed leads...")
+
+          let leads: any[] | null = null
+          try {
+            const leadsRes = await fetch(`/api/files/${result.fileId}/leads`)
+            if (!leadsRes.ok) {
+              throw new ImportError(
+                "Couldn't load processed leads",
+                "The file uploaded but we couldn't read it back. Try uploading again.",
+              )
+            }
+            const body = await leadsRes.json()
+            leads = body.leads ?? null
+          } catch (err) {
+            if (err instanceof ImportError) throw err
+            throw new ImportError(
+              "Couldn't load processed leads",
+              "Network error while loading leads. Try again.",
+            )
+          }
+
+          if (leads && leads.length > 0) {
+            const mappedLeads: ImportedLead[] = leads.map((l: any) => {
+              const { id, first_name, firstName, last_name, lastName, email, company, role, linkedin_url, linkedinUrl, company_url, companyUrl, created_at, updated_at, ...rest } = l;
+              return {
+                id: l.id,
+                firstName: l.first_name || l.firstName || "",
+                lastName: l.last_name || l.lastName || "",
+                email: l.email || "",
+                company: l.company || "",
+                role: l.role || "",
+                linkedinUrl: l.linkedin_url || l.linkedinUrl || "",
+                companyUrl: l.company_url || l.companyUrl || "",
+                selected: true,
+                customFields: rest,
+              };
+            })
+            importLeads(mappedLeads)
+            toast.success(
+              `Imported ${mappedLeads.length} lead${mappedLeads.length === 1 ? "" : "s"}`,
+              result.skippedRows
+                ? { description: `Skipped ${result.skippedRows} row${result.skippedRows === 1 ? "" : "s"} with missing or invalid email.` }
+                : undefined,
+            )
+            return
+          }
+
+          // fileId present but zero leads — fall through to empty-file error below
+        }
+
+        // Legacy fallback: client-side mapping when server returned raw rows
+        const { data } = result
+        if (data && data.length > 0) {
+          setMappingStatus("Identifying columns with AI...")
+          const headers = Object.keys(data[0])
+          const mapRes = await fetch("/api/map", {
+            method: "POST",
+            body: JSON.stringify({ headers, sampleRows: data.slice(0, 5) }),
+          })
+          if (!mapRes.ok) {
+            throw new ImportError(
+              "Column mapping failed",
+              "We couldn't figure out which columns are which. Make sure your file has clear headers like 'email', 'name', 'company'.",
+            )
+          }
+          const { mapping }: { mapping: MappingResult } = await mapRes.json()
+
+          setMappingStatus("Mapping data...")
+          const mappedLeads: ImportedLead[] = data.map((row: any, idx: number) => {
+            const mappedValues = new Set([
+              mapping.firstName, mapping.lastName, mapping.email,
+              mapping.company, mapping.role, mapping.linkedin, mapping.companyUrl
+            ].filter(Boolean));
+            const customFields: Record<string, any> = {};
+            for (const [key, value] of Object.entries(row)) {
+              if (!mappedValues.has(key)) {
+                customFields[key] = value;
+              }
+            }
+
+            return {
+              id: `lead-${Date.now()}-${idx}`,
+              firstName: mapping.firstName ? (row[mapping.firstName] || "") : "",
+              lastName: mapping.lastName ? (row[mapping.lastName] || "") : "",
+              email: mapping.email ? (row[mapping.email] || "") : "",
+              company: mapping.company ? (row[mapping.company] || "") : "",
+              role: mapping.role ? (row[mapping.role] || "") : "",
+              linkedinUrl: mapping.linkedin ? (row[mapping.linkedin] || "") : "",
+              companyUrl: mapping.companyUrl ? (row[mapping.companyUrl] || "") : "",
+              selected: true,
+              customFields,
+            }
+          }).filter((l: ImportedLead) => l.email)
+
+          if (mappedLeads.length === 0) {
+            throw new ImportError(
+              "No leads with email addresses found",
+              `We parsed ${data.length} row${data.length === 1 ? "" : "s"} but none had a recognizable email column. Check that your file has an email column with valid addresses.`,
+            )
+          }
+
+          importLeads(mappedLeads)
+          toast.success(
+            `Imported ${mappedLeads.length} lead${mappedLeads.length === 1 ? "" : "s"}`,
+            mappedLeads.length < data.length
+              ? { description: `Skipped ${data.length - mappedLeads.length} row${data.length - mappedLeads.length === 1 ? "" : "s"} with missing email.` }
+              : undefined,
+          )
+          return
+        }
+
+        // Reached here: server returned 200 but the file produced no leads
+        throw new ImportError(
+          "No leads found in this file",
+          "The file uploaded successfully but we couldn't extract any leads. Make sure it's a CSV or Excel file with at least an email column and one valid row.",
+        )
       } catch (error) {
         console.error("Import failed:", error)
-        // Ideally show error toast
+        if (error instanceof ImportError) {
+          toast.error(error.message, {
+            description: error.description,
+          })
+        } else {
+          toast.error("Failed to import file", {
+            description: error instanceof Error ? error.message : "Something unexpected went wrong. Try again.",
+          })
+        }
       } finally {
         setIsParsing(false)
         setMappingStatus(null)
@@ -248,10 +333,18 @@ export default function LeadsPage() {
                 </div>
 
                 {isDrafting && (
-                  <div className="rounded-lg border border-border bg-card px-4 py-3">
-                    <Reasoning isStreaming={isDrafting} className="w-full">
+                  <div className="rounded-lg border border-border bg-card px-4 py-3 flex items-center justify-between gap-3">
+                    <Reasoning isStreaming={isDrafting} className="flex-1 min-w-0 mb-0">
                       <ReasoningTrigger />
                     </Reasoning>
+                    <Badge
+                      variant="secondary"
+                      className="shrink-0 gap-1.5 font-mono text-[10px] uppercase tracking-wide"
+                      title={`AI model: ${DRAFTING_MODEL_OPTIONS[selectedModel].slug}`}
+                    >
+                      <Cpu className="h-3 w-3" />
+                      {DRAFTING_MODEL_OPTIONS[selectedModel].label}
+                    </Badge>
                   </div>
                 )}
 

@@ -1,0 +1,120 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - img "SalesMatter" [ref=e5]
+      - navigation [ref=e6]:
+        - list [ref=e7]:
+          - listitem [ref=e8]:
+            - link "Leads" [ref=e9] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e10]
+              - generic [ref=e15]: Leads
+          - listitem [ref=e16]:
+            - link "Files" [ref=e17] [cursor=pointer]:
+              - /url: /files
+              - img [ref=e18]
+              - generic [ref=e21]: Files
+          - listitem [ref=e22]:
+            - link "Drafts" [ref=e23] [cursor=pointer]:
+              - /url: /drafts
+              - img [ref=e24]
+              - generic [ref=e28]: Drafts
+          - listitem [ref=e29]:
+            - link "Send" [ref=e30] [cursor=pointer]:
+              - /url: /send
+              - img [ref=e31]
+              - generic [ref=e34]: Send
+          - listitem [ref=e35]:
+            - link "Analytics" [ref=e36] [cursor=pointer]:
+              - /url: /analytics
+              - img [ref=e37]
+              - generic [ref=e39]: Analytics
+          - listitem [ref=e40]:
+            - link "Settings" [ref=e41] [cursor=pointer]:
+              - /url: /settings
+              - img [ref=e42]
+              - generic [ref=e45]: Settings
+      - button "BM Burn Media Group" [ref=e47]:
+        - generic [ref=e49]: BM
+        - paragraph [ref=e51]: Burn Media Group
+        - img [ref=e52]
+    - main [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e57]:
+          - heading "Analytics" [level=1] [ref=e58]
+          - paragraph [ref=e59]: Last 30 days · email performance and pipeline
+        - generic [ref=e60]:
+          - heading "Email performance" [level=2] [ref=e61]
+          - generic [ref=e62]:
+            - generic [ref=e64]:
+              - img [ref=e67]
+              - generic [ref=e70]: Emails Sent
+              - generic [ref=e71]: "0"
+              - paragraph [ref=e72]: 0 delivered
+            - generic [ref=e74]:
+              - img [ref=e77]
+              - generic [ref=e80]: Open Rate
+              - generic [ref=e81]: 0%
+              - paragraph [ref=e82]: 0 unique · 0 total
+            - generic [ref=e84]:
+              - img [ref=e87]
+              - generic [ref=e90]: Click Rate
+              - generic [ref=e91]: 0%
+              - paragraph [ref=e92]: 0 unique · 0 total
+            - generic [ref=e94]:
+              - img [ref=e97]
+              - generic [ref=e99]: Reply Rate
+              - generic [ref=e100]: 0%
+              - paragraph [ref=e101]: 0 unique · 0 total
+            - generic [ref=e103]:
+              - img [ref=e106]
+              - generic [ref=e108]: Bounce Rate
+              - generic [ref=e109]: 0%
+              - paragraph [ref=e110]: 0 bounced
+            - generic [ref=e112]:
+              - img [ref=e115]
+              - generic [ref=e118]: Unsubscribe Rate
+              - generic [ref=e119]: 0%
+              - paragraph [ref=e120]: 0 unsubscribed
+        - generic [ref=e121]:
+          - heading "Pipeline" [level=2] [ref=e122]
+          - generic [ref=e123]:
+            - generic [ref=e125]:
+              - img [ref=e128]
+              - generic [ref=e133]: Leads Contacted
+              - generic [ref=e134]: "0"
+              - paragraph [ref=e135]: Unique leads in last 30 days
+            - generic [ref=e137]:
+              - img [ref=e140]
+              - generic [ref=e144]: Opportunities
+              - generic [ref=e145]: "0"
+              - paragraph [ref=e146]: Leads that became opportunities
+            - generic [ref=e148]:
+              - img [ref=e151]
+              - generic [ref=e153]: Interested
+              - generic [ref=e154]: "0"
+              - paragraph [ref=e155]: Marked as interested
+            - generic [ref=e157]:
+              - img [ref=e160]
+              - generic [ref=e162]: Meetings Booked
+              - generic [ref=e163]: "0"
+              - paragraph [ref=e164]: Calls scheduled
+            - generic [ref=e166]:
+              - img [ref=e169]
+              - generic [ref=e172]: Meetings Completed
+              - generic [ref=e173]: "0"
+              - paragraph [ref=e174]: Calls held
+            - generic [ref=e176]:
+              - img [ref=e179]
+              - generic [ref=e185]: Closed
+              - generic [ref=e186]: "0"
+              - paragraph [ref=e187]: Deals closed
+        - generic [ref=e190]:
+          - img [ref=e192]
+          - heading "No analytics data yet" [level=3] [ref=e195]
+          - paragraph [ref=e196]: Once you start sending campaigns, we'll track your daily performance and engagement metrics here.
+        - generic [ref=e197]:
+          - generic [ref=e199]: Recent Sent Emails
+          - generic [ref=e201]: No emails sent yet. Start by creating drafts and sending them.
+  - button "Open Next.js Dev Tools" [ref=e207] [cursor=pointer]:
+    - img [ref=e208]

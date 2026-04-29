@@ -1,119 +1,41 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react"
-import type { EmailDraft, ImportedLead, OutreachBatch, EmailMetrics, DailyMetric, RecentSentEmail } from "@/types"
+import { toast } from "sonner"
+import type { DraftVersion, EmailDraft, ImportedLead, OutreachBatch, EmailMetrics, DailyMetric, RecentSentEmail } from "@/types"
 import { getAnalyticsData } from "@/app/actions/get-instantly-analytics"
+import { getDefaultPromptTemplate } from "@/app/actions/get-default-prompt"
+import { DEFAULT_DRAFTING_MODEL, isDraftingModelId, type DraftingModelId } from "@/lib/ai/models"
 
-const DEFAULT_PROMPT_TEMPLATE = `You are an expert sales copywriter following the Carl Davis XYZ Formula for cold outreach. Every email must follow a 6-component messaging structure designed for natural, conversational, high-converting cold outreach. No exceptions.
+// Version history is now managed server-side by the email_draft_versions table.
+// The frontend just trusts whatever previousVersions arrive in API responses.
 
-THE CARL DAVIS XYZ FORMULA — NON-NEGOTIABLE STRUCTURE
-Every email must follow this exact order:
-1. Connection
-2. Specialty
-3. Problem or Desire
-4. Value
-5. End Result
-6. CTA
-Do not skip, merge, or reorder.
-
-COMPONENT 1 — CONNECTION
-"Hello [Name], I'm Carl Davis with SalesMatter."
-- Must reference something real and specific
-- Must feel researched
-- Must signal this is NOT mass outreach
-Valid sources: Company positioning, Partnerships, Press mentions, Product activity, Market behavior.
-Rules: 1–2 sentences max. No generic openers. Must feel tailored.
-
-COMPONENT 2 — SPECIALTY
-"We specialize in working with [specific role or organization type]…"
-SalesMatter positioning examples: media sales leaders, revenue teams running outbound, founders scaling cold email, agencies managing outreach.
-Rules: Be precise. Must feel like it describes the prospect exactly.
-
-COMPONENT 3 — PROBLEM OR DESIRE
-"…who are experiencing / looking for / need / that…"
-SalesMatter problems: low reply rates, inconsistent follow ups, manual personalization, scattered tools, difficulty scaling outbound.
-Rules: NOT a question. ONE problem only. Must feel realistic.
-
-COMPONENT 4 — VALUE
-"We help them [reduce/increase/improve/grow] [outcome]."
-Focus only on outcomes.
-Examples: reduce manual outreach effort, increase qualified pipeline, improve reply rates, eliminate inefficiency.
-Rules: No features. 1–2 sentences. Must mirror how buyers think.
-
-COMPONENT 5 — END RESULT
-"For our clients this has meant…"
-Examples: measurable lift in replies, more consistent pipeline, better engagement, fewer missed opportunities.
-Rules: Use real or directional outcomes. No fake metrics. Keep concise.
-
-COMPONENT 6 — CTA
-"I would like to [action] to [soft outcome]."
-Approved CTAs: ask a few questions, review what you are doing, discuss your situation, go through your requirements.
-Rules: ONE CTA only. Must be soft. No demo requests.
-
-SUBJECT LINE RULES
-- Under 8 words
-- No hype or clickbait
-Examples: Quick question re [Company] growth, Improving [Company] outreach flow, [Company] pipeline consistency, Question about your outreach.
-
-EMAIL STYLE RULES
-- Length: 150–220 words
-- Tone: Conversational, operator-level
-- Paragraphs: 2–3 sentences max
-- Formatting: Plain text
-- Language: Simple, no jargon
-- Personalization: Minimum 2 real references
-
-SALESMATTER CONTEXT
-What it is: AI powered outbound platform
-What it does: Manages outreach, personalizes emails at scale, improves reply rates, keeps pipeline consistent
-Replaces: spreadsheets, manual writing, disconnected tools
-
-QUALITY CHECKLIST
-Every email must pass:
-- Correct 6-component structure
-- Subject under 8 words
-- 2+ personalization points
-- 1 clear problem
-- Outcome-driven value
-- Directional or measurable result
-- 1 soft CTA only
-- Natural tone, no jargon
-
-FINAL INSTRUCTION
-Write like a real person who understands outbound deeply and has done this before.
-The email should feel personal, relevant, slightly imperfect, and easy to reply to.
-Not polished, corporate, or generic.
-
-GOLD STANDARD EXAMPLES (REFERENCE OUTPUTS)
-Use the tone, structure, and quality from these examples:
-
-Example 1 Subject: Quick question re Mediamark growth
-Hello Wayne,
-I saw how Mediamark continues expanding its footprint across audio and digital, especially with partners like Warner Music Africa and Podcast and Chill. It looks like you are leaning into multi channel audience monetization quite aggressively.
-We specialize in working with media sales leaders and commercial teams running multi platform advertising portfolios who are looking to keep outbound conversations consistent while scaling partner acquisition.
-We help them reduce manual outreach effort and increase qualified pipeline from outbound.
-For our clients this has meant a more consistent flow of brand conversations and a noticeable lift in response rates within the first few weeks.
-I would like to ask a few questions about how your team is currently approaching outbound to see if this could be of value to you.
-
-Example 2 Subject: Connecting Mediamark outbound
-Hello Wayne,
-I came across Mediamark’s positioning as a multi channel sales house bridging advertisers with platforms like Odeeo and VIU. It feels like a model that depends heavily on continuous outreach to keep deal flow active.
-We specialize in working with CEOs and revenue leaders in media and digital sales organizations who are looking for more structured outbound systems without losing personalization.
-We help them minimize inconsistent follow ups and grow pipeline quality through more relevant outreach.
-For most teams this results in more replies from the same volume of emails and fewer missed opportunities over time.
-I would like to review what you are currently doing for outbound to see if we might have a reason to speak.`;
+const PROMPT_TEMPLATE_STORAGE_KEY = 'salesmatter_prompt_template_v8'
+const LEGACY_PROMPT_TEMPLATE_STORAGE_KEYS = ['salesmatter_prompt_template_v5', 'salesmatter_prompt_template_v6', 'salesmatter_prompt_template_v7']
 
 const INITIAL_METRICS: EmailMetrics = {
     sent: 0,
     delivered: 0,
     opened: 0,
+    uniqueOpened: 0,
     clicked: 0,
+    uniqueClicked: 0,
     replied: 0,
+    uniqueReplied: 0,
     bounced: 0,
+    unsubscribed: 0,
+    newLeadsContacted: 0,
+    totalOpportunities: 0,
+    opportunityValue: 0,
+    interested: 0,
+    meetingsBooked: 0,
+    meetingsCompleted: 0,
+    closed: 0,
     openRate: 0,
     clickRate: 0,
     replyRate: 0,
     bounceRate: 0,
+    unsubscribeRate: 0,
 }
 
 interface ErrorState {
@@ -129,6 +51,8 @@ interface OutreachContextType {
     isDrafting: boolean
     promptTemplate: string
     setPromptTemplate: (template: string) => void
+    selectedModel: DraftingModelId
+    setSelectedModel: (model: DraftingModelId) => void
     importLeads: (leads: ImportedLead[]) => void
     toggleLeadSelection: (leadId: string) => void
     selectAllLeads: (selected: boolean) => void
@@ -138,10 +62,12 @@ interface OutreachContextType {
     sendBulk: (draftIds: string[]) => Promise<void>
     sendNewEmail: (to: string, subject: string, body: string) => Promise<void>
     deleteDraft: (draftId: string) => void
+    clearDrafts: () => Promise<{ success: boolean; deleted: number }>
     regenerateDraft: (draftId: string) => Promise<void>
     regeneratingDraftId: string | null
     regenerateAllDrafts: () => Promise<void>
     regenerateSelectedDrafts: (ids: string[]) => Promise<void>
+    restoreDraftVersion: (draftId: string, versionId: string) => void
     isRegeneratingAll: boolean
     regeneratingAllProgress: { current: number; total: number } | null
     resetFlow: () => void
@@ -174,14 +100,20 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
     const [currentBatch, setCurrentBatch] = useState<OutreachBatch | null>(null)
     const [isDrafting, setIsDrafting] = useState(false)
 
-    // Initialize from localStorage if available
+    // Initialize from localStorage if available; otherwise the default is
+    // hydrated from cold-email-skill.md via a server action below so the .md
+    // file stays the single source of truth.
     const [promptTemplate, setPromptTemplate] = useState(() => {
         if (typeof window !== 'undefined') {
-            const saved = localStorage.getItem('salesmatter_prompt_template_v2')
-            return saved || DEFAULT_PROMPT_TEMPLATE
+            return localStorage.getItem(PROMPT_TEMPLATE_STORAGE_KEY) ?? ''
         }
-        return DEFAULT_PROMPT_TEMPLATE
+        return ''
     })
+
+    // Initialized to default so server and client first-render match. The saved
+    // value (if any) is loaded from localStorage in a useEffect below.
+    const [selectedModel, setSelectedModel] = useState<DraftingModelId>(DEFAULT_DRAFTING_MODEL)
+    const [modelHydrated, setModelHydrated] = useState(false)
 
     const [metrics, setMetrics] = useState<EmailMetrics>(INITIAL_METRICS)
     const [dailyMetrics, setDailyMetrics] = useState<DailyMetric[]>([])
@@ -281,7 +213,8 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
                 status: d.status,
                 createdAt: d.created_at,
                 sentAt: d.sent_at,
-                researchSummary: d.research_summary
+                researchSummary: d.research_summary,
+                previousVersions: Array.isArray(d.previous_versions) ? d.previous_versions : [],
             }))
 
             setDrafts(formattedDrafts)
@@ -324,12 +257,48 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         fetchAnalytics()
     }, [fetchDrafts, fetchAnalytics])
 
-    // Persist to localStorage whenever it changes
+    // Hydrate the default prompt from cold-email-skill.md (server action) on
+    // first mount when the user has no current saved override. The storage key
+    // is versioned with the prompt so stale localStorage copies cannot outlive
+    // cold-email-skill.md changes.
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('salesmatter_prompt_template_v2', promptTemplate)
+        if (typeof window === 'undefined') return
+        LEGACY_PROMPT_TEMPLATE_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key))
+        if (localStorage.getItem(PROMPT_TEMPLATE_STORAGE_KEY)) return
+        let cancelled = false
+        getDefaultPromptTemplate()
+            .then((skill) => {
+                if (!cancelled) setPromptTemplate(skill)
+            })
+            .catch((err) => console.error('Failed to load default prompt template:', err))
+        return () => {
+            cancelled = true
         }
+    }, [])
+
+    // Persist to localStorage whenever it changes (only after hydration so we
+    // don't write the empty initial state).
+    useEffect(() => {
+        if (typeof window === 'undefined') return
+        if (!promptTemplate) return
+        localStorage.setItem(PROMPT_TEMPLATE_STORAGE_KEY, promptTemplate)
     }, [promptTemplate])
+
+    // Load saved model after first mount to avoid SSR/client hydration mismatch.
+    useEffect(() => {
+        const saved = localStorage.getItem('salesmatter_drafting_model')
+        if (isDraftingModelId(saved)) {
+            setSelectedModel(saved)
+        }
+        setModelHydrated(true)
+    }, [])
+
+    // Persist only after hydration so we don't overwrite the saved value on
+    // the first render with the default.
+    useEffect(() => {
+        if (!modelHydrated) return
+        localStorage.setItem('salesmatter_drafting_model', selectedModel)
+    }, [selectedModel, modelHydrated])
 
     const [showOnboarding, setShowOnboarding] = useState(true)
 
@@ -366,7 +335,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
             const response = await fetch("/api/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ leads: selectedLeads, promptTemplate }),
+                body: JSON.stringify({ leads: selectedLeads, promptTemplate, modelId: selectedModel }),
             })
 
             const result = await response.json()
@@ -433,7 +402,7 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         } finally {
             setIsDrafting(false)
         }
-    }, [importedLeads, promptTemplate])
+    }, [importedLeads, promptTemplate, selectedModel])
 
     const updateDraft = useCallback(async (draftId: string, updates: Partial<EmailDraft>) => {
         // Optimistic update
@@ -547,6 +516,28 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         }
     }, [])
 
+    const clearDrafts = useCallback(async (): Promise<{ success: boolean; deleted: number }> => {
+        const previousDrafts = drafts
+        const pendingCount = previousDrafts.filter((d) => d.status !== "sent").length
+
+        // Optimistically remove pending drafts from UI
+        setDrafts((prev) => prev.filter((d) => d.status === "sent"))
+
+        try {
+            const res = await fetch("/api/drafts?scope=pending", { method: "DELETE" })
+            const result = await res.json()
+            if (!res.ok || result.error) {
+                throw new Error(result.error || `Clear failed (${res.status})`)
+            }
+            return { success: true, deleted: result.deleted ?? pendingCount }
+        } catch (error) {
+            console.error("Failed to clear drafts:", error)
+            // Restore on failure
+            setDrafts(previousDrafts)
+            return { success: false, deleted: 0 }
+        }
+    }, [drafts])
+
     const sendNewEmail = useCallback(async (to: string, subject: string, body: string) => {
         try {
             // Create a temporary draft object for the API
@@ -587,60 +578,67 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
     const [isRegeneratingAll, setIsRegeneratingAll] = useState(false)
     const [regeneratingAllProgress, setRegeneratingAllProgress] = useState<{ current: number; total: number } | null>(null)
 
+    // Calls POST /api/drafts/[id]/regenerate. The server archives the current
+    // content into email_draft_versions, runs research + drafting, and updates
+    // the same row in place (so the draft id stays stable).
+    const runRegenerate = useCallback(
+        async (draftId: string): Promise<boolean> => {
+            try {
+                const response = await fetch(`/api/drafts/${draftId}/regenerate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ promptTemplate, modelId: selectedModel }),
+                })
+                const result = await response.json()
+                if (!response.ok || result.error) {
+                    throw new Error(result.error || `Regenerate failed (${response.status})`)
+                }
+
+                const updated = result.draft
+                const previousVersions: DraftVersion[] = Array.isArray(result.previousVersions)
+                    ? result.previousVersions
+                    : []
+
+                if (updated?.subject && updated?.body) {
+                    setDrafts((prev) => prev.map((d) => {
+                        if (d.id !== draftId) return d
+                        return {
+                            ...d,
+                            subject: updated.subject,
+                            body: updated.body,
+                            status: (updated.status ?? "drafted") as EmailDraft["status"],
+                            researchSummary: updated.researchSummary ?? d.researchSummary,
+                            createdAt: updated.createdAt ?? new Date().toISOString(),
+                            previousVersions,
+                        }
+                    }))
+                    return true
+                }
+                return false
+            } catch (error) {
+                console.error(`Failed to regenerate draft ${draftId}:`, error)
+                return false
+            }
+        },
+        [promptTemplate, selectedModel],
+    )
+
     const regenerateDraft = useCallback(async (draftId: string) => {
         const draft = drafts.find((d) => d.id === draftId)
         if (!draft) return
 
         setRegeneratingDraftId(draftId)
+        const ok = await runRegenerate(draftId)
+        setRegeneratingDraftId(null)
 
-        try {
-            // Call the generate API with just this lead
-            const leadForRegeneration = {
-                id: draft.leadId,
-                firstName: draft.lead.firstName,
-                lastName: draft.lead.lastName,
-                email: draft.lead.email,
-                company: draft.lead.company,
-                role: draft.lead.role,
-                selected: true
-            }
-
-            const response = await fetch("/api/generate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate, isRegenerate: true }),
+        if (ok) {
+            toast.success("New draft generated", {
+                description: "Previous draft saved to version history.",
             })
-
-            const result = await response.json()
-            if (result.error) throw new Error(result.error)
-
-            const newDraft = result.drafts?.[0]
-            if (newDraft && newDraft.subject && newDraft.body) {
-                // Delete old draft from DB
-                await fetch(`/api/drafts/${draftId}`, { method: "DELETE" })
-
-                // Update local state: replace old draft with new one
-                setDrafts((prev) => prev.map((d) => {
-                    if (d.id === draftId) {
-                        return {
-                            ...d,
-                            id: newDraft.id,
-                            subject: newDraft.subject,
-                            body: newDraft.body,
-                            status: "drafted" as const,
-                            researchSummary: newDraft.researchSummary,
-                            createdAt: new Date().toISOString()
-                        }
-                    }
-                    return d
-                }))
-            }
-        } catch (error) {
-            console.error("Failed to regenerate draft:", error)
-        } finally {
-            setRegeneratingDraftId(null)
+        } else {
+            toast.error("Could not regenerate draft", { description: "Please try again." })
         }
-    }, [drafts, promptTemplate])
+    }, [drafts, runRegenerate])
 
     const regenerateAllDrafts = useCallback(async () => {
         const pendingDrafts = drafts.filter((d) => d.status !== "sent")
@@ -649,58 +647,27 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         setIsRegeneratingAll(true)
         setRegeneratingAllProgress({ current: 0, total: pendingDrafts.length })
 
+        let successCount = 0
         for (let i = 0; i < pendingDrafts.length; i++) {
             const draft = pendingDrafts[i]
             setRegeneratingAllProgress({ current: i + 1, total: pendingDrafts.length })
             setRegeneratingDraftId(draft.id)
-
-            try {
-                const leadForRegeneration = {
-                    id: draft.leadId,
-                    firstName: draft.lead.firstName,
-                    lastName: draft.lead.lastName,
-                    email: draft.lead.email,
-                    company: draft.lead.company,
-                    role: draft.lead.role,
-                    selected: true
-                }
-
-                const response = await fetch("/api/generate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate, isRegenerate: true }),
-                })
-
-                const result = await response.json()
-                if (result.error) throw new Error(result.error)
-
-                const newDraft = result.drafts?.[0]
-                if (newDraft?.subject && newDraft?.body) {
-                    await fetch(`/api/drafts/${draft.id}`, { method: "DELETE" })
-                    setDrafts((prev) => prev.map((d) => {
-                        if (d.id === draft.id) {
-                            return {
-                                ...d,
-                                id: newDraft.id,
-                                subject: newDraft.subject,
-                                body: newDraft.body,
-                                status: "drafted" as const,
-                                researchSummary: newDraft.researchSummary,
-                                createdAt: new Date().toISOString()
-                            }
-                        }
-                        return d
-                    }))
-                }
-            } catch (error) {
-                console.error(`Failed to regenerate draft ${draft.id}:`, error)
-            }
+            const ok = await runRegenerate(draft.id)
+            if (ok) successCount += 1
         }
 
         setRegeneratingDraftId(null)
         setIsRegeneratingAll(false)
         setRegeneratingAllProgress(null)
-    }, [drafts, promptTemplate, isRegeneratingAll])
+
+        if (successCount > 0) {
+            toast.success("Drafts regenerated", {
+                description: "Previous drafts saved to version history.",
+            })
+        } else {
+            toast.error("Could not regenerate drafts", { description: "Please try again." })
+        }
+    }, [drafts, isRegeneratingAll, runRegenerate])
 
     const regenerateSelectedDrafts = useCallback(async (ids: string[]) => {
         if (ids.length === 0 || isRegeneratingAll) return
@@ -710,58 +677,87 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         setIsRegeneratingAll(true)
         setRegeneratingAllProgress({ current: 0, total: selectedDrafts.length })
 
+        let successCount = 0
         for (let i = 0; i < selectedDrafts.length; i++) {
             const draft = selectedDrafts[i]
             setRegeneratingAllProgress({ current: i + 1, total: selectedDrafts.length })
             setRegeneratingDraftId(draft.id)
-
-            try {
-                const leadForRegeneration = {
-                    id: draft.leadId,
-                    firstName: draft.lead.firstName,
-                    lastName: draft.lead.lastName,
-                    email: draft.lead.email,
-                    company: draft.lead.company,
-                    role: draft.lead.role,
-                    selected: true
-                }
-
-                const response = await fetch("/api/generate", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ leads: [leadForRegeneration], promptTemplate, isRegenerate: true }),
-                })
-
-                const result = await response.json()
-                if (result.error) throw new Error(result.error)
-
-                const newDraft = result.drafts?.[0]
-                if (newDraft?.subject && newDraft?.body) {
-                    await fetch(`/api/drafts/${draft.id}`, { method: "DELETE" })
-                    setDrafts((prev) => prev.map((d) => {
-                        if (d.id === draft.id) {
-                            return {
-                                ...d,
-                                id: newDraft.id,
-                                subject: newDraft.subject,
-                                body: newDraft.body,
-                                status: "drafted" as const,
-                                researchSummary: newDraft.researchSummary,
-                                createdAt: new Date().toISOString()
-                            }
-                        }
-                        return d
-                    }))
-                }
-            } catch (error) {
-                console.error(`Failed to regenerate draft ${draft.id}:`, error)
-            }
+            const ok = await runRegenerate(draft.id)
+            if (ok) successCount += 1
         }
 
         setRegeneratingDraftId(null)
         setIsRegeneratingAll(false)
         setRegeneratingAllProgress(null)
-    }, [drafts, promptTemplate, isRegeneratingAll])
+
+        if (successCount > 0) {
+            toast.success("Drafts regenerated", {
+                description: `Saved previous version${successCount === 1 ? "" : "s"} to history.`,
+            })
+        } else {
+            toast.error("Could not regenerate drafts", { description: "Please try again." })
+        }
+    }, [drafts, isRegeneratingAll, runRegenerate])
+
+    const restoreDraftVersion = useCallback(async (draftId: string, versionId: string) => {
+        // Optimistic local swap so the UI feels instant; we reconcile against
+        // the server response below.
+        setDrafts((prev) => prev.map((d) => {
+            if (d.id !== draftId) return d
+            const target = d.previousVersions?.find((v) => v.id === versionId)
+            if (!target) return d
+            const archivedCurrent: DraftVersion = {
+                id: `optimistic-${draftId}-${Date.now()}`,
+                subject: d.subject,
+                body: d.body,
+                generatedAt: d.createdAt,
+            }
+            const remaining = (d.previousVersions ?? []).filter((v) => v.id !== versionId)
+            return {
+                ...d,
+                subject: target.subject,
+                body: target.body,
+                createdAt: new Date().toISOString(),
+                previousVersions: [archivedCurrent, ...remaining].slice(0, 5),
+            }
+        }))
+
+        try {
+            const response = await fetch(`/api/drafts/${draftId}/restore`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ versionId }),
+            })
+            const result = await response.json()
+            if (!response.ok || result.error) {
+                throw new Error(result.error || `Restore failed (${response.status})`)
+            }
+
+            const updated = result.draft
+            const previousVersions: DraftVersion[] = Array.isArray(result.previousVersions)
+                ? result.previousVersions
+                : []
+
+            setDrafts((prev) => prev.map((d) => {
+                if (d.id !== draftId) return d
+                return {
+                    ...d,
+                    subject: updated.subject ?? d.subject,
+                    body: updated.body ?? d.body,
+                    createdAt: updated.createdAt ?? d.createdAt,
+                    researchSummary: updated.researchSummary ?? d.researchSummary,
+                    previousVersions,
+                }
+            }))
+
+            toast.success("Previous draft restored as current.")
+        } catch (error) {
+            console.error("Failed to restore draft version:", error)
+            toast.error("Could not restore draft", { description: "Reloading to recover state." })
+            // Refetch to recover any divergence between optimistic state and server.
+            fetchDrafts()
+        }
+    }, [fetchDrafts])
 
     const value = {
         importedLeads,
@@ -770,6 +766,8 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         isDrafting,
         promptTemplate,
         setPromptTemplate,
+        selectedModel,
+        setSelectedModel,
         importLeads,
         toggleLeadSelection,
         selectAllLeads,
@@ -779,10 +777,12 @@ export function OutreachProvider({ children }: { children: ReactNode }) {
         sendBulk,
         sendNewEmail,
         deleteDraft,
+        clearDrafts,
         regenerateDraft,
         regeneratingDraftId,
         regenerateAllDrafts,
         regenerateSelectedDrafts,
+        restoreDraftVersion,
         isRegeneratingAll,
         regeneratingAllProgress,
         resetFlow,

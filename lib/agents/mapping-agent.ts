@@ -2,14 +2,17 @@ import { generateObject, NoObjectGeneratedError } from 'ai';
 import { z } from 'zod';
 import { getModel } from '@/lib/ai/openrouter';
 
+// Note: every field is required (`.nullable()` not `.optional()`). OpenAI's
+// strict structured-output mode rejects schemas with any property missing from
+// the `required` array. The model returns `null` for unmatched optional fields.
 const mappingSchema = z.object({
   firstName: z.string().describe('Column name for First Name'),
   lastName: z.string().describe('Column name for Last Name'),
   email: z.string().describe('Column name for Email'),
   company: z.string().describe('Column name for Company Name'),
-  linkedin: z.string().nullable().optional().describe('Column name for LinkedIn URL'),
-  companyUrl: z.string().nullable().optional().describe('Column name for Company Website URL'),
-  role: z.string().nullable().optional().describe('Column name for Job Title / Role'),
+  linkedin: z.string().nullable().describe('Column name for LinkedIn URL, or null if no matching column'),
+  companyUrl: z.string().nullable().describe('Column name for Company Website URL, or null if no matching column'),
+  role: z.string().nullable().describe('Column name for Job Title / Role, or null if no matching column'),
 });
 
 export type MappingResult = z.infer<typeof mappingSchema>;
@@ -76,19 +79,20 @@ export async function identifyColumns(
 
   const prompt = `
     You are a data mapping assistant. Match the following CSV headers to the standard fields:
-    - firstName
-    - lastName
-    - email
-    - company
+    - firstName (required)
+    - lastName (required)
+    - email (required)
+    - company (required)
     - linkedin (optional - LinkedIn profile URL)
     - companyUrl (optional - Company website URL)
-    - role (optional)
+    - role (optional - Job title / role)
 
     Headers: ${JSON.stringify(headers)}
     Sample Data (first 3 rows): ${JSON.stringify(sampleRows.slice(0, 3))}
 
     Return the exact header name from the provided list that best matches each standard field.
-    If no match is found for a required field, pick the closest one or empty string if totally ambiguous.
+    For required fields, pick the closest header or empty string if totally ambiguous.
+    For optional fields (linkedin, companyUrl, role), return null when no header matches — do NOT guess and do NOT return an empty string.
   `;
 
   try {

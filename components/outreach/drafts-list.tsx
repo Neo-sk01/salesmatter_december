@@ -31,6 +31,7 @@ type Props = {
   onDelete: (id: string) => void
   onRegenerate?: (id: string) => void
   onRegenerateSelected?: (ids: string[]) => void
+  onRestoreVersion?: (draftId: string, versionId: string) => void
   regeneratingId?: string | null
   isRegeneratingAll?: boolean
 }
@@ -43,6 +44,7 @@ export function DraftsList({
   onDelete,
   onRegenerate,
   onRegenerateSelected,
+  onRestoreVersion,
   regeneratingId,
   isRegeneratingAll,
 }: Props) {
@@ -263,7 +265,7 @@ export function DraftsList({
                 <div className="space-y-2">
                   {groupDrafts.map((draft) => (
                     <EmailDraftCard
-                      key={draft.leadId ?? draft.id}
+                      key={draft.id}
                       draft={draft}
                       isSelected={selectedIds.has(draft.id)}
                       onSelect={handleSelect}
@@ -272,6 +274,7 @@ export function DraftsList({
                       onDelete={onDelete}
                       onEdit={() => setEditingDraft(draft)}
                       onRegenerate={onRegenerate}
+                      onRestoreVersion={onRestoreVersion}
                       isRegenerating={regeneratingId === draft.id}
                       disableRegenerate={isRegeneratingAll && regeneratingId !== draft.id}
                     />

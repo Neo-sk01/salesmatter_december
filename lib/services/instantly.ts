@@ -14,9 +14,11 @@ const DEFAULT_SENDER_EMAIL =
     process.env.INSTANTLY_SENDER_EMAIL || "neosekaleli@carbosoftware.com";
 
 const DEFAULT_SCHEDULE = {
-    timezone: "Africa/Johannesburg",
-    fromTime: "09:00",
-    toTime: "17:00",
+    // Instantly only accepts a curated subset of IANA tz names — Africa/Johannesburg
+    // is rejected. Africa/Cairo is also UTC+2 and is accepted.
+    timezone: "Africa/Cairo",
+    fromTime: "00:00",
+    toTime: "23:59",
     // Mon–Fri (Instantly: 0=Sunday … 6=Saturday)
     days: { 0: false, 1: true, 2: true, 3: true, 4: true, 5: true, 6: false },
 };
@@ -156,7 +158,11 @@ export async function createCampaign(
 }
 
 export async function activateCampaign(campaignId: string): Promise<void> {
-    await instantlyFetch(`/campaigns/${campaignId}/activate`, { method: "POST" });
+    // Instantly rejects empty bodies when Content-Type is application/json.
+    await instantlyFetch(`/campaigns/${campaignId}/activate`, {
+        method: "POST",
+        body: "{}",
+    });
 }
 
 export interface AddLeadOptions {

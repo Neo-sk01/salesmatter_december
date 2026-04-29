@@ -1,0 +1,515 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - img "SalesMatter" [ref=e5]
+      - navigation [ref=e6]:
+        - list [ref=e7]:
+          - listitem [ref=e8]:
+            - link "Leads" [ref=e9] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e10]
+              - generic [ref=e15]: Leads
+          - listitem [ref=e16]:
+            - link "Files" [ref=e17] [cursor=pointer]:
+              - /url: /files
+              - img [ref=e18]
+              - generic [ref=e21]: Files
+          - listitem [ref=e22]:
+            - link "Drafts 11" [ref=e96] [cursor=pointer]:
+              - /url: /drafts
+              - img [ref=e24]
+              - generic [ref=e28]: Drafts
+              - generic [ref=e97]: "11"
+          - listitem [ref=e29]:
+            - link "Send" [ref=e30] [cursor=pointer]:
+              - /url: /send
+              - img [ref=e31]
+              - generic [ref=e34]: Send
+          - listitem [ref=e35]:
+            - link "Analytics" [ref=e36] [cursor=pointer]:
+              - /url: /analytics
+              - img [ref=e37]
+              - generic [ref=e39]: Analytics
+          - listitem [ref=e40]:
+            - link "Settings" [ref=e41] [cursor=pointer]:
+              - /url: /settings
+              - img [ref=e42]
+              - generic [ref=e45]: Settings
+      - button "BM Burn Media Group" [ref=e47]:
+        - generic [ref=e49]: BM
+        - paragraph [ref=e51]: Burn Media Group
+        - img [ref=e52]
+    - main [ref=e54]:
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - heading "Email Drafts" [level=1] [ref=e58]
+            - paragraph [ref=e59]: 11 drafts pending
+          - generic [ref=e63]:
+            - 'generic "Drafting model: deepseek/deepseek-v3.2" [ref=e64]':
+              - img [ref=e65]
+              - combobox [ref=e68]:
+                - generic:
+                  - generic:
+                    - generic: DeepSeek 3.7
+                    - generic: deepseek/deepseek-v3.2
+                - img
+            - button "Select from Files" [ref=e69]:
+              - img
+              - text: Select from Files
+            - button "View Prompt" [active] [ref=e70]:
+              - img
+              - text: View Prompt
+            - button "Regenerate All" [ref=e98]:
+              - img
+              - text: Regenerate All
+            - button "Clear Drafts" [ref=e99]:
+              - img
+              - text: Clear Drafts
+            - link "Ready to Send" [ref=e100] [cursor=pointer]:
+              - /url: /send
+              - button "Ready to Send" [ref=e101]:
+                - text: Ready to Send
+                - img
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - generic [ref=e104]:
+              - img [ref=e105]
+              - textbox "Search leads, companies, or subjects..." [ref=e108]
+            - generic [ref=e109]:
+              - combobox [ref=e110]:
+                - generic: All Status
+                - img
+              - combobox [ref=e111]:
+                - generic: Newest First
+                - img
+          - generic [ref=e113]:
+            - button "Select All" [ref=e115]:
+              - img
+              - text: Select All
+            - generic [ref=e116]:
+              - button "Send Selected" [disabled]:
+                - img
+                - text: Send Selected
+          - generic [ref=e118]:
+            - heading "Today 11" [level=3] [ref=e119]:
+              - button "Today 11" [expanded] [ref=e120]:
+                - generic [ref=e121]:
+                  - heading "Today" [level=3] [ref=e122]
+                  - generic [ref=e123]: "11"
+                - img
+            - region "Today 11" [ref=e124]:
+              - generic [ref=e126]:
+                - generic [ref=e127]:
+                  - generic [ref=e128]:
+                    - checkbox "Select draft for Sean Emery sean.e@rainfin.com" [ref=e129]
+                    - generic [ref=e130]:
+                      - generic [ref=e131]:
+                        - generic [ref=e132]: Sean Emery sean.e@rainfin.com
+                        - generic [ref=e133]: Draft
+                        - generic [ref=e134]:
+                          - img [ref=e135]
+                          - text: 8:30 AM
+                      - generic [ref=e138]:
+                        - generic [ref=e139]:
+                          - img [ref=e140]
+                          - text: Rainfin - 1
+                        - generic [ref=e144]:
+                          - img [ref=e145]
+                          - text: CEO
+                      - generic [ref=e149]:
+                        - img [ref=e150]
+                        - generic [ref=e153]: sean.e@rainfin.com
+                    - generic [ref=e157]:
+                      - button "View research" [ref=e158]:
+                        - img
+                      - button "Edit draft" [ref=e159]:
+                        - img
+                      - button "Regenerate draft" [ref=e160]:
+                        - img
+                      - button "Send email" [ref=e161]:
+                        - img
+                      - button "Delete draft" [ref=e162]:
+                        - img
+                      - button "Collapse draft" [expanded] [ref=e553]:
+                        - img
+                  - generic [ref=e555]:
+                    - generic [ref=e556]:
+                      - generic [ref=e557]: Current Draft
+                      - generic [ref=e558]: Generated Apr 29, 8:30 AM
+                    - generic [ref=e559]:
+                      - paragraph [ref=e560]: Subject
+                      - paragraph [ref=e561]: Outmax for Rainfin
+                    - generic [ref=e562]:
+                      - paragraph [ref=e563]: Body
+                      - paragraph [ref=e564]: Hi Sean, I noticed Rainfin's majority stake sale to LeBashe and the planned R1 billion SME fund. With Texmex piloting R40 million, it feels like growth media needs the same accountability as the credit marketplace. We work with African financial services and fintech teams spending across YouTube, Meta, TikTok, programmatic, display and video. The difficult part is that acquisition spend sits across too many platforms, and it is not always clear where the next rand should go while campaigns are live. Perion's Outmax, brought into African markets through Mediamark and McSorely Media, helps optimise pacing and spend allocation in real time against brand defined business outcomes, not only platform KPIs. Perion positions Outmax around up to 40 percent efficiency. Wepner delivered 96 percent YouTube completion and a 27 percent reduction in carbon intensity. Could it be worth looking at this in the context of Rainfin's next growth campaign? Best regards, Dewald Van Niekerk Head of Sales dewald.vanniekerk@mediamark.co.za
+                    - button "Previous Drafts 1" [ref=e567]:
+                      - generic [ref=e568]:
+                        - img [ref=e569]
+                        - text: Previous Drafts
+                        - generic [ref=e573]: "1"
+                      - img [ref=e574]
+                - generic [ref=e165]:
+                  - checkbox "Select draft for Sean Emery sean.emery@rainfin.com" [ref=e166]
+                  - generic [ref=e167]:
+                    - generic [ref=e168]:
+                      - generic [ref=e169]: Sean Emery sean.emery@rainfin.com
+                      - generic [ref=e170]: Draft
+                      - generic [ref=e171]:
+                        - img [ref=e172]
+                        - text: 8:27 AM
+                    - generic [ref=e175]:
+                      - generic [ref=e176]:
+                        - img [ref=e177]
+                        - text: Rainfin - 2
+                      - generic [ref=e181]:
+                        - img [ref=e182]
+                        - text: CEO
+                    - generic [ref=e185]:
+                      - generic [ref=e186]:
+                        - img [ref=e187]
+                        - generic [ref=e190]: sean.emery@rainfin.com
+                      - generic [ref=e191]:
+                        - generic [ref=e192]: "Subject:"
+                        - generic [ref=e193]: Outmax for RainFin growth
+                  - generic [ref=e194]:
+                    - button "View research" [ref=e195]:
+                      - img
+                    - button "Edit draft" [ref=e196]:
+                      - img
+                    - button "Regenerate draft" [ref=e197]:
+                      - img
+                    - button "Send email" [ref=e198]:
+                      - img
+                    - button "Delete draft" [ref=e199]:
+                      - img
+                    - button "Expand draft" [ref=e200]:
+                      - img
+                - generic [ref=e202]:
+                  - checkbox "Select draft for Dewald Potgieter dewald@flutterwave.com" [ref=e203]
+                  - generic [ref=e204]:
+                    - generic [ref=e205]:
+                      - generic [ref=e206]: Dewald Potgieter dewald@flutterwave.com
+                      - generic [ref=e207]: Draft
+                      - generic [ref=e208]:
+                        - img [ref=e209]
+                        - text: 8:17 AM
+                    - generic [ref=e212]:
+                      - generic [ref=e213]:
+                        - img [ref=e214]
+                        - text: "Flutterwave: (Pan-African)"
+                      - generic [ref=e218]:
+                        - img [ref=e219]
+                        - text: VP President of Sales
+                    - generic [ref=e222]:
+                      - generic [ref=e223]:
+                        - img [ref=e224]
+                        - generic [ref=e227]: dewald@flutterwave.com
+                      - generic [ref=e228]:
+                        - generic [ref=e229]: "Subject:"
+                        - generic [ref=e230]: Flutterwave’s next growth phase
+                  - generic [ref=e231]:
+                    - button "View research" [ref=e232]:
+                      - img
+                    - button "Edit draft" [ref=e233]:
+                      - img
+                    - button "Regenerate draft" [ref=e234]:
+                      - img
+                    - button "Send email" [ref=e235]:
+                      - img
+                    - button "Delete draft" [ref=e236]:
+                      - img
+                    - button "Expand draft" [ref=e237]:
+                      - img
+                - generic [ref=e239]:
+                  - checkbox "Select draft for Tom Stuart tom@lula.co.za" [ref=e240]
+                  - generic [ref=e241]:
+                    - generic [ref=e242]:
+                      - generic [ref=e243]: Tom Stuart tom@lula.co.za
+                      - generic [ref=e244]: Draft
+                      - generic [ref=e245]:
+                        - img [ref=e246]
+                        - text: 8:17 AM
+                    - generic [ref=e249]:
+                      - generic [ref=e250]:
+                        - img [ref=e251]
+                        - text: Lulalend - 1
+                      - generic [ref=e255]:
+                        - img [ref=e256]
+                        - text: CMO
+                    - generic [ref=e259]:
+                      - generic [ref=e260]:
+                        - img [ref=e261]
+                        - generic [ref=e264]: tom@lula.co.za
+                      - generic [ref=e265]:
+                        - generic [ref=e266]: "Subject:"
+                        - generic [ref=e267]: Lula’s next growth phase
+                  - generic [ref=e268]:
+                    - button "View research" [ref=e269]:
+                      - img
+                    - button "Edit draft" [ref=e270]:
+                      - img
+                    - button "Regenerate draft" [ref=e271]:
+                      - img
+                    - button "Send email" [ref=e272]:
+                      - img
+                    - button "Delete draft" [ref=e273]:
+                      - img
+                    - button "Expand draft" [ref=e274]:
+                      - img
+                - generic [ref=e276]:
+                  - checkbox "Select draft for Alex von Schirmeister alexvon.schirmeister@xero.com" [ref=e277]
+                  - generic [ref=e278]:
+                    - generic [ref=e279]:
+                      - generic [ref=e280]: Alex von Schirmeister alexvon.schirmeister@xero.com
+                      - generic [ref=e281]: Draft
+                      - generic [ref=e282]:
+                        - img [ref=e283]
+                        - text: 8:17 AM
+                    - generic [ref=e286]:
+                      - generic [ref=e287]:
+                        - img [ref=e288]
+                        - text: Xero
+                      - generic [ref=e292]:
+                        - img [ref=e293]
+                        - text: MD UK & Africa
+                    - generic [ref=e296]:
+                      - generic [ref=e297]:
+                        - img [ref=e298]
+                        - generic [ref=e301]: alexvon.schirmeister@xero.com
+                      - generic [ref=e302]:
+                        - generic [ref=e303]: "Subject:"
+                        - generic [ref=e304]: Supporting Xero’s UK & Africa growth
+                  - generic [ref=e305]:
+                    - button "View research" [ref=e306]:
+                      - img
+                    - button "Edit draft" [ref=e307]:
+                      - img
+                    - button "Regenerate draft" [ref=e308]:
+                      - img
+                    - button "Send email" [ref=e309]:
+                      - img
+                    - button "Delete draft" [ref=e310]:
+                      - img
+                    - button "Expand draft" [ref=e311]:
+                      - img
+                - generic [ref=e313]:
+                  - checkbox "Select draft for Lucia Malapane lmalapane@tymebank.co.za." [ref=e314]
+                  - generic [ref=e315]:
+                    - generic [ref=e316]:
+                      - generic [ref=e317]: Lucia Malapane lmalapane@tymebank.co.za.
+                      - generic [ref=e318]: Draft
+                      - generic [ref=e319]:
+                        - img [ref=e320]
+                        - text: 8:17 AM
+                    - generic [ref=e323]:
+                      - generic [ref=e324]:
+                        - img [ref=e325]
+                        - text: TymeBank
+                      - generic [ref=e329]:
+                        - img [ref=e330]
+                        - text: Senior Marketing Manager
+                    - generic [ref=e333]:
+                      - generic [ref=e334]:
+                        - img [ref=e335]
+                        - generic [ref=e338]: lmalapane@tymebank.co.za.
+                      - generic [ref=e339]:
+                        - generic [ref=e340]: "Subject:"
+                        - generic [ref=e341]: GoTyme Bank’s next growth phase
+                  - generic [ref=e342]:
+                    - button "View research" [ref=e343]:
+                      - img
+                    - button "Edit draft" [ref=e344]:
+                      - img
+                    - button "Regenerate draft" [ref=e345]:
+                      - img
+                    - button "Send email" [ref=e346]:
+                      - img
+                    - button "Delete draft" [ref=e347]:
+                      - img
+                    - button "Expand draft" [ref=e348]:
+                      - img
+                - generic [ref=e350]:
+                  - checkbox "Select draft for Andrew Watkins-Ball andrew.watkins-ball@jumo.world" [ref=e351]
+                  - generic [ref=e352]:
+                    - generic [ref=e353]:
+                      - generic [ref=e354]: Andrew Watkins-Ball andrew.watkins-ball@jumo.world
+                      - generic [ref=e355]: Draft
+                      - generic [ref=e356]:
+                        - img [ref=e357]
+                        - text: 8:17 AM
+                    - generic [ref=e360]:
+                      - generic [ref=e361]:
+                        - img [ref=e362]
+                        - text: Jumo (Pan-African)
+                      - generic [ref=e366]:
+                        - img [ref=e367]
+                        - text: Founder & Group CEO
+                    - generic [ref=e370]:
+                      - generic [ref=e371]:
+                        - img [ref=e372]
+                        - generic [ref=e375]: andrew.watkins-ball@jumo.world
+                      - generic [ref=e376]:
+                        - generic [ref=e377]: "Subject:"
+                        - generic [ref=e378]: Jumo's next growth phase
+                  - generic [ref=e379]:
+                    - button "View research" [ref=e380]:
+                      - img
+                    - button "Edit draft" [ref=e381]:
+                      - img
+                    - button "Regenerate draft" [ref=e382]:
+                      - img
+                    - button "Send email" [ref=e383]:
+                      - img
+                    - button "Delete draft" [ref=e384]:
+                      - img
+                    - button "Expand draft" [ref=e385]:
+                      - img
+                - generic [ref=e387]:
+                  - checkbox "Select draft for Michael Thomson michael@snapscan.co.za" [ref=e388]
+                  - generic [ref=e389]:
+                    - generic [ref=e390]:
+                      - generic [ref=e391]: Michael Thomson michael@snapscan.co.za
+                      - generic [ref=e392]: Draft
+                      - generic [ref=e393]:
+                        - img [ref=e394]
+                        - text: 8:17 AM
+                    - generic [ref=e397]:
+                      - generic [ref=e398]:
+                        - img [ref=e399]
+                        - text: SnapScan
+                      - generic [ref=e403]:
+                        - img [ref=e404]
+                        - text: Head of Marketing at Snapscan
+                    - generic [ref=e407]:
+                      - generic [ref=e408]:
+                        - img [ref=e409]
+                        - generic [ref=e412]: michael@snapscan.co.za
+                      - generic [ref=e413]:
+                        - generic [ref=e414]: "Subject:"
+                        - generic [ref=e415]: Data-led growth at SnapScan
+                  - generic [ref=e416]:
+                    - button "View research" [ref=e417]:
+                      - img
+                    - button "Edit draft" [ref=e418]:
+                      - img
+                    - button "Regenerate draft" [ref=e419]:
+                      - img
+                    - button "Send email" [ref=e420]:
+                      - img
+                    - button "Delete draft" [ref=e421]:
+                      - img
+                    - button "Expand draft" [ref=e422]:
+                      - img
+                - generic [ref=e424]:
+                  - checkbox "Select draft for Shaylen Padayachee shaylenp@ozow.com" [ref=e425]
+                  - generic [ref=e426]:
+                    - generic [ref=e427]:
+                      - generic [ref=e428]: Shaylen Padayachee shaylenp@ozow.com
+                      - generic [ref=e429]: Draft
+                      - generic [ref=e430]:
+                        - img [ref=e431]
+                        - text: 8:17 AM
+                    - generic [ref=e434]:
+                      - generic [ref=e435]:
+                        - img [ref=e436]
+                        - text: Ozow
+                      - generic [ref=e440]:
+                        - img [ref=e441]
+                        - text: Head of Marketing at Ozow
+                    - generic [ref=e444]:
+                      - generic [ref=e445]:
+                        - img [ref=e446]
+                        - generic [ref=e449]: shaylenp@ozow.com
+                      - generic [ref=e450]:
+                        - generic [ref=e451]: "Subject:"
+                        - generic [ref=e452]: Ozow's SME partnership momentum
+                  - generic [ref=e453]:
+                    - button "View research" [ref=e454]:
+                      - img
+                    - button "Edit draft" [ref=e455]:
+                      - img
+                    - button "Regenerate draft" [ref=e456]:
+                      - img
+                    - button "Send email" [ref=e457]:
+                      - img
+                    - button "Delete draft" [ref=e458]:
+                      - img
+                    - button "Expand draft" [ref=e459]:
+                      - img
+                - generic [ref=e461]:
+                  - checkbox "Select draft for Peter O’Toole peter.otoole@cellulant.io" [ref=e462]
+                  - generic [ref=e463]:
+                    - generic [ref=e464]:
+                      - generic [ref=e465]: Peter O’Toole peter.otoole@cellulant.io
+                      - generic [ref=e466]: Draft
+                      - generic [ref=e467]:
+                        - img [ref=e468]
+                        - text: 8:17 AM
+                    - generic [ref=e471]:
+                      - generic [ref=e472]:
+                        - img [ref=e473]
+                        - text: "Cellulant: (Pan-African)"
+                      - generic [ref=e477]:
+                        - img [ref=e478]
+                        - text: Group CEO
+                    - generic [ref=e481]:
+                      - generic [ref=e482]:
+                        - img [ref=e483]
+                        - generic [ref=e486]: peter.otoole@cellulant.io
+                      - generic [ref=e487]:
+                        - generic [ref=e488]: "Subject:"
+                        - generic [ref=e489]: Supporting Cellulant’s next growth phase
+                  - generic [ref=e490]:
+                    - button "View research" [ref=e491]:
+                      - img
+                    - button "Edit draft" [ref=e492]:
+                      - img
+                    - button "Regenerate draft" [ref=e493]:
+                      - img
+                    - button "Send email" [ref=e494]:
+                      - img
+                    - button "Delete draft" [ref=e495]:
+                      - img
+                    - button "Expand draft" [ref=e496]:
+                      - img
+                - generic [ref=e498]:
+                  - checkbox "Select draft for Jessica Fowlds Jessica.fowlds@zapper.co.za" [ref=e499]
+                  - generic [ref=e500]:
+                    - generic [ref=e501]:
+                      - generic [ref=e502]: Jessica Fowlds Jessica.fowlds@zapper.co.za
+                      - generic [ref=e503]: Draft
+                      - generic [ref=e504]:
+                        - img [ref=e505]
+                        - text: 8:17 AM
+                    - generic [ref=e508]:
+                      - generic [ref=e509]:
+                        - img [ref=e510]
+                        - text: Zapper
+                      - generic [ref=e514]:
+                        - img [ref=e515]
+                        - text: Head of Marketing & Comms
+                    - generic [ref=e518]:
+                      - generic [ref=e519]:
+                        - img [ref=e520]
+                        - generic [ref=e523]: jessica.fowlds@zapper.co.za
+                      - generic [ref=e524]:
+                        - generic [ref=e525]: "Subject:"
+                        - generic [ref=e526]: Zapper V2 and SME growth
+                  - generic [ref=e527]:
+                    - button "View research" [ref=e528]:
+                      - img
+                    - button "Edit draft" [ref=e529]:
+                      - img
+                    - button "Regenerate draft" [ref=e530]:
+                      - img
+                    - button "Send email" [ref=e531]:
+                      - img
+                    - button "Delete draft" [ref=e532]:
+                      - img
+                    - button "Expand draft" [ref=e533]:
+                      - img
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e91] [cursor=pointer]:
+    - img [ref=e92]
+  - alert [ref=e95]

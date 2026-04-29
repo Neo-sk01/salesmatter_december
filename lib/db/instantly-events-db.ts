@@ -221,6 +221,83 @@ export async function applyEventToMessage(
     }
 }
 
+export interface CampaignMetricsAggregate {
+    totalCounts: Map<string, number>;
+    uniqueLeadCounts: Map<string, number>;
+    uniqueRepliers: number;
+    opportunityLeads: number;
+}
+
+/**
+ * Aggregates events into the metric set Instantly's GET
+ * /api/v2/campaigns/analytics/daily exposes. One scan of the events table
+ * yields both raw counts and per-lead unique counts, plus the union of leads
+ * who reached any positive lifecycle state (interested / meeting / closed) =
+ * total_opportunities.
+ */
+export async function getCampaignMetrics(
+    startDate: Date,
+    endDate: Date,
+): Promise<CampaignMetricsAggregate> {
+    const supabase = getSupabase();
+
+    const { data, error } = await supabase
+        .from("instantly_events")
+        .select("event_type, email")
+        .gte("occurred_at", startDate.toISOString())
+        .lte("occurred_at", endDate.toISOString())
+        .limit(50000);
+
+    if (error) {
+        console.error("[instantly-events-db] Metrics query error:", error);
+        return {
+            totalCounts: new Map(),
+            uniqueLeadCounts: new Map(),
+            uniqueRepliers: 0,
+            opportunityLeads: 0,
+        };
+    }
+
+    const totalCounts = new Map<string, number>();
+    const uniqueLeads = new Map<string, Set<string>>();
+    const replierLeads = new Set<string>();
+    const opportunityLeads = new Set<string>();
+    const OPPORTUNITY_EVENTS = new Set([
+        "lead_interested",
+        "lead_meeting_booked",
+        "lead_meeting_completed",
+        "lead_closed",
+    ]);
+    const REPLY_EVENTS = new Set(["reply_received", "auto_reply_received"]);
+
+    for (const row of data ?? []) {
+        const type = row.event_type as string;
+        totalCounts.set(type, (totalCounts.get(type) ?? 0) + 1);
+
+        const email = row.email as string | null;
+        if (email) {
+            let leadSet = uniqueLeads.get(type);
+            if (!leadSet) {
+                leadSet = new Set<string>();
+                uniqueLeads.set(type, leadSet);
+            }
+            leadSet.add(email);
+            if (OPPORTUNITY_EVENTS.has(type)) opportunityLeads.add(email);
+            if (REPLY_EVENTS.has(type)) replierLeads.add(email);
+        }
+    }
+
+    const uniqueLeadCounts = new Map<string, number>();
+    for (const [type, set] of uniqueLeads) uniqueLeadCounts.set(type, set.size);
+
+    return {
+        totalCounts,
+        uniqueLeadCounts,
+        uniqueRepliers: replierLeads.size,
+        opportunityLeads: opportunityLeads.size,
+    };
+}
+
 export async function getEventCountsByType(
     startDate: Date,
     endDate: Date,

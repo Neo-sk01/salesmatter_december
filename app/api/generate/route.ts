@@ -4,6 +4,7 @@ import { researchLead } from "@/lib/agents/research-agent";
 import { draftEmail } from "@/lib/agents/drafting-agent";
 import { AIError } from "@/lib/ai/errors";
 import { regenerateEmail } from "@/lib/agents/regeneration-agent";
+import { isDraftingModelId } from "@/lib/ai/models";
 import { ImportedLead } from "@/types";
 import { createClient } from "@supabase/supabase-js";
 
@@ -17,7 +18,7 @@ function getSupabase() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { leads, promptTemplate, isRegenerate = false } = await req.json();
+        const { leads, promptTemplate, isRegenerate = false, modelId } = await req.json();
 
         if (!leads || !Array.isArray(leads)) {
             return NextResponse.json(
@@ -25,6 +26,8 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
+
+        const resolvedModelId = isDraftingModelId(modelId) ? modelId : undefined;
 
         // Process leads in parallel(ish) - limiting concurrency might be wise in production
         // but for small batches, map is fine.
@@ -37,8 +40,8 @@ export async function POST(req: NextRequest) {
 
                     // 2. Draft
                     const draft = isRegenerate
-                        ? await regenerateEmail(lead, summary, promptTemplate)
-                        : await draftEmail(lead, summary, promptTemplate);
+                        ? await regenerateEmail(lead, summary, promptTemplate, resolvedModelId)
+                        : await draftEmail(lead, summary, promptTemplate, false, resolvedModelId);
 
                     const status = "drafted";
 

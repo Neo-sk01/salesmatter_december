@@ -1,0 +1,56 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - img "SalesMatter" [ref=e5]
+      - navigation [ref=e6]:
+        - list [ref=e7]:
+          - listitem [ref=e8]:
+            - link "Leads" [ref=e9] [cursor=pointer]:
+              - /url: /dashboard
+              - img [ref=e10]
+              - generic [ref=e15]: Leads
+          - listitem [ref=e16]:
+            - link "Files" [ref=e17] [cursor=pointer]:
+              - /url: /files
+              - img [ref=e18]
+              - generic [ref=e21]: Files
+          - listitem [ref=e22]:
+            - link "Drafts" [ref=e23] [cursor=pointer]:
+              - /url: /drafts
+              - img [ref=e24]
+              - generic [ref=e28]: Drafts
+          - listitem [ref=e29]:
+            - link "Send" [ref=e30] [cursor=pointer]:
+              - /url: /send
+              - img [ref=e31]
+              - generic [ref=e34]: Send
+          - listitem [ref=e35]:
+            - link "Analytics" [ref=e36] [cursor=pointer]:
+              - /url: /analytics
+              - img [ref=e37]
+              - generic [ref=e39]: Analytics
+          - listitem [ref=e40]:
+            - link "Settings" [ref=e41] [cursor=pointer]:
+              - /url: /settings
+              - img [ref=e42]
+              - generic [ref=e45]: Settings
+      - button "BM Burn Media Group" [ref=e47]:
+        - generic [ref=e49]: BM
+        - paragraph [ref=e51]: Burn Media Group
+        - img [ref=e52]
+    - main [ref=e54]:
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - heading "Email Drafts" [level=1] [ref=e58]
+          - paragraph [ref=e59]:
+            - generic [ref=e60]:
+              - img [ref=e61]
+              - text: Loading drafts...
+        - generic [ref=e63]:
+          - button "Select from Files" [ref=e64]:
+            - img
+            - text: Select from Files
+          - button "View Prompt" [ref=e65]:
+            - img
+            - text: View Prompt
+  - alert [ref=e81]

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Fraunces, DM_Sans, JetBrains_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { OutreachProvider } from "@/contexts/outreach-context"
+import { Toaster } from "sonner"
 import "./globals.css"
 
 const display = Fraunces({
@@ -42,6 +43,7 @@ export default function RootLayout({
     >
       <body className="font-sans antialiased" suppressHydrationWarning>
         <OutreachProvider>{children}</OutreachProvider>
+        <Toaster position="top-right" richColors closeButton />
         <Analytics />
       </body>
     </html>

@@ -1,35 +1,36 @@
 import { generateObject } from 'ai';
 import { ImportedLead } from '@/types';
-import { getModel } from '@/lib/ai/openrouter';
+import { getDraftingModel } from '@/lib/ai/openrouter';
+import type { DraftingModelId } from '@/lib/ai/models';
 import { parseAIError } from '@/lib/ai/errors';
 import { emailSchema } from './drafting-agent';
-import { loadEmailTemplate } from '@/lib/utils/email-template-loader';
+import { loadColdEmailSkill } from './prompts/skill-loader';
 
 export async function regenerateEmail(
     lead: ImportedLead,
     researchSummary: string,
     userPrompt: string,
+    modelId?: DraftingModelId,
 ) {
-    const referenceTemplate = loadEmailTemplate();
+    const systemPrompt = loadColdEmailSkill();
 
     const customFieldsText = Object.entries(lead.customFields || {})
         .filter(([_, v]) => v !== undefined && v !== null && v !== '')
         .map(([k, v]) => `- ${k}: ${v}`)
         .join('\n    ');
 
+    // Only inject operator instructions when they actually differ from the
+    // system prompt. The UI's default template mirrors cold-email-skill.md,
+    // so without this guard the same content would be sent twice — and a
+    // stale localStorage copy would contradict the fresh system prompt.
+    const trimmedUserPrompt = userPrompt?.trim() ?? '';
+    const operatorBlock =
+        trimmedUserPrompt && trimmedUserPrompt !== systemPrompt.trim()
+            ? `Operator-level instructions for this batch:\n    ${userPrompt}\n\n    ---\n\n    `
+            : '';
+
     const fullPrompt = `
-    ${userPrompt}
-
-    ---
-
-    IMPORTANT TASK: You are REGENERATING an outreach email. You must provide a DIFFERENT variation with a fresh feel, while keeping the core structure, voice, and length similar to the previous iterations.
-
-    You MUST use the following reference email as the SINGLE SOURCE OF TRUTH for the tone, cadence, flow, KPIs, and footer.
-    Adapt the specific details (like company names, research points, and target audience nuances) to fit the prospect's actual data and the research summary below.
-
-    === REFERENCE EMAIL (SINGLE SOURCE OF TRUTH) ===
-    ${referenceTemplate}
-    === END REFERENCE EMAIL ===
+    ${operatorBlock}IMPORTANT TASK: You are REGENERATING an outreach email. Produce a DIFFERENT variation with a fresh angle, while still strictly following the formula in the system prompt. Vary the connection opener, the specialty framing, and the CTA wording. Keep the structure intact.
 
     ---
 
@@ -44,13 +45,13 @@ export async function regenerateEmail(
     Research Summary for Personalization:
     ${researchSummary}
 
-    Task: Write the subject line and body of the cold outreach email incorporating the research summary.
-    The email must mirror the KPIs (bullet-point metrics) and end with the EXACT same closing signature and footer as the reference email above.
+    Task: Write a fresh subject line and body for the cold outreach email, drawing personalization from the research summary above.
     `;
 
     try {
         const { object } = await generateObject({
-            model: getModel('regeneration'),
+            model: getDraftingModel(modelId, 'regeneration'),
+            system: systemPrompt,
             schema: emailSchema,
             prompt: fullPrompt,
             temperature: 0.8,
